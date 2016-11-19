@@ -1,21 +1,25 @@
+
+import flask
+from flask import Flask
+from flask_bootstrap import Bootstrap
+from flask_appconfig import AppConfig
+from flask_nav import Nav
+
 import os
-try:
-  from SimpleHTTPServer import SimpleHTTPRequestHandler as Handler
-  from SocketServer import TCPServer as Server
-except ImportError:
-  from http.server import SimpleHTTPRequestHandler as Handler
-  from http.server import HTTPServer as Server
 
-# Read port selected by the cloud for our application
-PORT = int(os.getenv('PORT', 8000))
-# Change current directory to avoid exposure of control files
-os.chdir('static')
+from frontend import frontend
 
-httpd = Server(("", PORT), Handler)
-try:
-  print("Start serving at port %i" % PORT)
-  httpd.serve_forever()
-except KeyboardInterrupt:
-  pass
-httpd.server_close()
+if __name__ == "__main__":
+    app = Flask (__name__)
+
+    app.register_blueprint(frontend)
+
+    AppConfig (app)
+
+    Bootstrap (app)
+
+    Nav (app)
+
+    port = os.getenv ("VCAP_APP_PORT", default=8000)
+    app.run(host="0.0.0.0", port=int(port))
 
