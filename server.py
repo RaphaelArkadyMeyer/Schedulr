@@ -12,11 +12,14 @@ from frontend import frontend
 if __name__ == "__main__":
     app = Flask (__name__)
 
+    app.secret_key = 'super secret key'
+    app.config['SESSION_TYPE'] = 'filesystem'
+
+    Bootstrap (app)
+
     app.register_blueprint(frontend)
 
     AppConfig (app)
-
-    Bootstrap (app)
 
     Nav (app)
 
