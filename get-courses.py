@@ -40,8 +40,8 @@ def describe_cache(cache, name):
 _eg_payload = {'$filter': 'contains(Title, \'Algebra \')',
                '$select': 'Title,Number,Classes'}
 
-_term_payload = {'$select': 'Name,StartDate,EndDate,Classes'}
-term_cache = request_cache(_term_payload, 'Terms', 'Name')
+_term_payload = {}
+term_cache = request_cache(_term_payload, 'Terms', 'TermId')
 describe_cache(term_cache, 'Terms')
 
 _subject_payload = {}
@@ -88,7 +88,7 @@ describe_cache(building_cache, 'Buildings')
 
 
 _room_payload = {}
-room_cache = request_cache(_room_payload, 'Room', 'RoomId')
+room_cache = request_cache(_room_payload, 'Rooms', 'RoomId')
 describe_cache(room_cache, 'Rooms')
 
 
@@ -96,9 +96,12 @@ caches = [term_cache, subject_cache, course_cache, class_cache, section_cache,
           meeting_cache, instructors_cache, campus_cache, building_cache,
           room_cache]
 
+sum = 0
+for cache in caches:
+    sum += cache.__sizeof__()
 
-print('Altogether, we are using {} bytes of memory'
-      .format(caches.__sizeof__()))
+print('Altogether, we are using {} bytes of memory'.format(sum))
+
 # A course-name is a list of 2 strings
 # Eg: ['cs', '39000']
 
