@@ -1,0 +1,14 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block content %}
+	<form class="form" method="post" role="form">
+		{{ form.hidden_tag() }}
+		{{ wtf.form_errors(form, hiddens="only") }}
+
+		{% for key in form.course_keys %}
+			{{ wtf.form_field(form[key]) }}
+		{% endfor %}
+		{{ wtf.form_field(form.submit_button) }}
+
+	</form>
+{% endblock %}

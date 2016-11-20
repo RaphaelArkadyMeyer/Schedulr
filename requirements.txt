@@ -1,0 +1,7 @@
+
+flask-appconfig
+flask-bootstrap
+flask-nav
+flask-debug
+flask-wtf
+
