@@ -1,9 +1,21 @@
 from datetime import datetime
+import os.path
 import json
+
+from get_courses import download_all_data
+
+# class courseCache:
+
+
+
+#     def __init__(self):
+
 print("Start")
 
 
 def get_caches(file_path):
+    if not os.path.exists(file_path):
+        download_all_data(file_path)
     f = open(file_path, 'r')
     text = f.read()
     f.close()
@@ -11,7 +23,7 @@ def get_caches(file_path):
 
 
 print("Getting caches....")
-caches = get_caches('CourseInfo.json')
+caches = get_caches('./CourseInfo.json')
 print("Done!")
 print("{} bytes read from file.".format(caches.__sizeof__()))
 
@@ -113,6 +125,7 @@ def parse_meeting_time(meeting_time):
 def example_query_meeting_id(meeting_id):
     meeting = get_api_object(meeting_id, 'Meetings')
     start_time = parse_meeting_time(meeting['StartTime'])
+    print("\t\t\t{}".format(meeting))
     print("\t\t\t{}".format(start_time))
 
 
@@ -152,7 +165,7 @@ def example_query(dept, number):
         example_query_course_id(course_id)
 
 
-example_query('ECE', '20100')
+example_query('CS', '35400')
 
 
 print("End")
