@@ -5,7 +5,7 @@
 		{{ form.hidden_tag() }}
 		{{ wtf.form_errors(form, hiddens="only") }}
 
-		{% for key in keys %}
+		{% for key in form.course_keys %}
 			{{ wtf.form_field(form[key]) }}
 		{% endfor %}
 	</form>
