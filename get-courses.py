@@ -1,4 +1,5 @@
 import requests
+import json
 print("Start")
 
 
@@ -17,8 +18,13 @@ def request_cache(payload, odata_type, key):
     resp = send_request(payload, odata_type)
     print('Request URL:{}'.format(resp.url))
     print(resp)
+
+    f = open("jsonDump.txt", 'w')
+    f.write(json.dumps(resp.json()))
+    f.close()
+
     # print(resp.json())
-    resp_list = dict(resp.json())['value']
+    resp_list = resp.json()['value']
     print('We found {} entries matching the query'.format(len(resp_list)))
     cache = dict()
     for item in resp_list:  # Build map by given key
@@ -37,6 +43,12 @@ def describe_cache(cache, name):
     print()
 
 
+def write_caches(cache_list, file_path):
+    f = open(file_path, 'w')
+    f.write(json.dumps(cache_list))
+    f.close()
+
+
 _eg_payload = {'$filter': 'contains(Title, \'Algebra \')',
                '$select': 'Title,Number,Classes'}
 
@@ -48,10 +60,13 @@ _subject_payload = {}
 subject_cache = request_cache(_subject_payload, 'Subjects', 'SubjectId')
 describe_cache(subject_cache, 'Subjects')
 
-_course_payload = {}
-course_cache = request_cache(_subject_payload, 'Courses', 'Title')
-describe_cache(course_cache, 'Course')
+# $filter=Subject/Abbreviation eq 'SPAN' and Number
+# ge '30000' and Number le '39999'&$orderby=Number asc
 
+_course_payload = {}
+# {'$filter': 'Number eq \'39000\''}
+course_cache = request_cache(_course_payload, 'Courses', 'CourseId')
+describe_cache(course_cache, 'Course')
 
 _class_payload = {}
 class_cache = request_cache(_class_payload, 'Classes', 'ClassId')
@@ -92,22 +107,24 @@ room_cache = request_cache(_room_payload, 'Rooms', 'RoomId')
 describe_cache(room_cache, 'Rooms')
 
 
-caches = [term_cache, subject_cache, course_cache, class_cache, section_cache,
-          meeting_cache, instructors_cache, campus_cache, building_cache,
-          room_cache]
+caches = dict()
+caches['Terms'] = term_cache
+caches['Subjects'] = subject_cache
+caches['Courses'] = course_cache
+caches['Classes'] = class_cache
+caches['Sections'] = section_cache
+caches['Meetings'] = meeting_cache
+caches['Instructors'] = instructors_cache
+caches['Campuses'] = campus_cache
+caches['Buildings'] = building_cache
+caches['Rooms'] = room_cache
 
 sum = 0
-for cache in caches:
-    sum += cache.__sizeof__()
+for key in caches:
+    sum += caches[key].__sizeof__()
 
 print('Altogether, we are using {} bytes of memory'.format(sum))
 
-# A course-name is a list of 2 strings
-# Eg: ['cs', '39000']
-
-# A course-times is a list of section-lists
-# A section-list is a list of time values
-
-# getCourseTimes : Course (CS39000) -> A list of a list of times ()
+write_caches(caches, 'CourseInfo.json')
 
 print("End")
