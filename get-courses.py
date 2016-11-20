@@ -9,6 +9,7 @@ def make_url(path=''):
 
 def send_request(payload, path=''):
     resp = requests.get(make_url(path), params=payload)
+    print(resp)
     if resp.status_code != 200:
         raise "Failed to get API Information"
     return resp
@@ -17,7 +18,6 @@ def send_request(payload, path=''):
 def request_cache(payload, odata_type, key):
     resp = send_request(payload, odata_type)
     print('Request URL:{}'.format(resp.url))
-    print(resp)
 
     f = open("jsonDump.txt", 'w')
     f.write(json.dumps(resp.json()))
@@ -52,7 +52,9 @@ def write_caches(cache_list, file_path):
 _eg_payload = {'$filter': 'contains(Title, \'Algebra \')',
                '$select': 'Title,Number,Classes'}
 
-_term_payload = {}
+_term_ids = ["c230a256-3f5d-4436-a8f8-020cf756b38d"]
+_term_payload = {'$filter': 'TermId eq ' + _term_ids[0]}
+print(_term_payload)
 term_cache = request_cache(_term_payload, 'Terms', 'TermId')
 describe_cache(term_cache, 'Terms')
 
@@ -60,18 +62,12 @@ _subject_payload = {}
 subject_cache = request_cache(_subject_payload, 'Subjects', 'SubjectId')
 describe_cache(subject_cache, 'Subjects')
 
-# $filter=Subject/Abbreviation eq 'SPAN' and Number
-# ge '30000' and Number le '39999'&$orderby=Number asc
-
 _course_payload = {}
-# {'$filter': 'Number eq \'39000\''}
 course_cache = request_cache(_course_payload, 'Courses', 'CourseId')
 describe_cache(course_cache, 'Course')
 
-_class_payload = {}
+_class_payload = {'$filter': 'TermId eq c230a256-3f5d-4436-a8f8-020cf756b38d'}
 class_cache = request_cache(_class_payload, 'Classes', 'ClassId')
-
-
 describe_cache(class_cache, 'Classes')
 
 
