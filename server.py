@@ -9,8 +9,13 @@ import os
 
 from frontend import frontend
 
+from read_courses import CourseCache
+
 if __name__ == "__main__":
     app = Flask (__name__)
+
+    CourseCache.setup()
+    CourseCache.example_query('COM', '21700')
 
     app.secret_key = 'super secret key'
     app.config['SESSION_TYPE'] = 'filesystem'
