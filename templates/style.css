@@ -2,12 +2,12 @@
  * This file provides css styles.
  */
 body, html {
-	background-color: {{ color.background }};
 	width: 100%;
 	height: 100%;
 	margin: 0 auto;
 	font-family: "HelveticaNeue-Light", "Helvetica Neue Light",
 		"Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+	background-color: {{ color.background }};
 }
 
 a {
@@ -20,16 +20,27 @@ a:hover {
 }
 
 .content {
-	background-color: {{ color.neutral }};
 	margin-bottom: 6.25vw;
 	width: 75%;
 	position: relative;
 	left: 12.5%;
 	padding: 20px;
 	min-height: 500px;
+	background-color: {{ color.neutral }};
 }
 
 nav.navbar-default, nav{
 	border: none;
 	border-radius: 0;
+}
+
+.schedule {
+	position: relative;
+}
+
+.course {
+	position: absolute;
+	height: 60px;
+	width: 20%;
+
 }

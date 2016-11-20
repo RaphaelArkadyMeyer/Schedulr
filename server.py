@@ -25,8 +25,10 @@ def navigate():
 
 if __name__ == "__main__":
 
+    app.debug = True
     app.secret_key = 'super secret key'
-    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config.from_object('config')
+    #app.config['SESSION_TYPE'] = 'filesystem'
 
     Bootstrap (app)
 

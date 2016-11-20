@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="schedule">
+		{% for field in fields %}
+			<div class="course" style="background-color: {{ field.color }};top: {{ field.top }};left: {{ field.left }};"></div>
+		{% endfor %}
+	</div>
+{% endblock %}
+
