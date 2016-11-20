@@ -1,6 +1,5 @@
 import requests
 import json
-print("Start")
 
 
 def make_url(path=''):
@@ -44,6 +43,8 @@ def write_caches(cache_list, file_path):
 
 
 def download_all_data(file_path):
+    print("Starting Download from PurdueIo API")
+
     _term_ids = ["c230a256-3f5d-4436-a8f8-020cf756b38d"]
     _term_payload = {'$filter': 'TermId eq ' + _term_ids[0]}
     print(_term_payload)
