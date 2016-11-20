@@ -30,11 +30,6 @@ a:hover {
 }
 
 nav.navbar-default, nav{
-	background-color: {{ color.header }};
 	border: none;
 	border-radius: 0;
-}
-
-nav .active a {
-	background-color: {{color.headerSelected }};
 }

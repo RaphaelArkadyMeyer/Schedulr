@@ -12,8 +12,8 @@ frontend = Blueprint('frontend', __name__)
 css_defs = {
         'color': {
             'link':           '#0044ee',
-            'header':         '#800080',
-            'headerSelected': '#a020a0',
+            'header':         '#20083c',
+            'headerSelected': '#431e6c',
             'background':     '#aa44aa',
             'neutral':        '#eeeeee',
             },
@@ -38,7 +38,7 @@ for i in xrange(CourseList.max_courses):
 def get_index():
     return flask.render_template("base.html", mimetype="text/html")
 
-@frontend.route('/style.css')
+@frontend.route('/stylesheets/style.css')
 def get_main_stylesheet():
     css_file = flask.render_template('/style.css', renderer='bootstrap', **css_defs)
     #print(type(css_file))
