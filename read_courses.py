@@ -127,8 +127,9 @@ class CourseCache:
     @classmethod
     def parse_meeting_time(cls, meeting_time):
         # Removes extra colon from time zone
-        fixed_time = meeting_time[:22] + meeting_time[23:]
-        return datetime.strptime(fixed_time, '%Y-%m-%dT%H:%M:%S%z')
+        fixed_time = meeting_time[:19]
+        print("Fixed: {}".format(fixed_time))
+        return datetime.strptime(fixed_time, '%Y-%m-%dT%H:%M:%S')
 
     @classmethod
     def example_query_meeting_id(cls, meeting_id):
