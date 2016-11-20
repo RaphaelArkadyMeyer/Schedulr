@@ -8,5 +8,7 @@
 		{% for key in form.course_keys %}
 			{{ wtf.form_field(form[key]) }}
 		{% endfor %}
+		{{ wtf.form_field(form.submit_button) }}
+
 	</form>
 {% endblock %}

@@ -10,6 +10,7 @@ frontend = Blueprint('frontend', __name__)
 class CourseList (FlaskForm):
     max_courses = 15
     course_keys = []
+    submit_button = wtforms.SubmitField("Schedüle")
 
 # Modify CourseList dynamically
 # Pretend this is CourseList's constructor
