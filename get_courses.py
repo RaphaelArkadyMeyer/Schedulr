@@ -45,7 +45,7 @@ def write_caches(cache_list, file_path):
 def download_all_data(file_path):
     print("Starting Download from PurdueIo API")
 
-    _term_ids = ["c230a256-3f5d-4436-a8f8-020cf756b38d"]
+    _term_ids = ["c543a529-fed4-4fd0-b185-bd403106b4ea"]
     _term_payload = {'$filter': 'TermId eq ' + _term_ids[0]}
     print(_term_payload)
     term_cache = request_cache(_term_payload, 'Terms', 'TermId')
@@ -60,7 +60,7 @@ def download_all_data(file_path):
     describe_cache(course_cache, 'Course')
 
     _class_payload = {'$filter':
-                      'TermId eq c230a256-3f5d-4436-a8f8-020cf756b38d'}
+                      'TermId eq ' + _term_ids[0]}
     class_cache = request_cache(_class_payload, 'Classes', 'ClassId')
     describe_cache(class_cache, 'Classes')
 
