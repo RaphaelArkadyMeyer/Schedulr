@@ -1,4 +1,5 @@
 
+# coding=utf-8
 from flask import Blueprint
 from flask_wtf import FlaskForm
 import wtforms
@@ -10,11 +11,11 @@ frontend = Blueprint('frontend', __name__)
 class CourseList (FlaskForm):
     max_courses = 15
     course_keys = []
-    submit_button = wtforms.SubmitField("Schedüle")
+    submit_button = wtforms.SubmitField(u"Schedüle")
 
 # Modify CourseList dynamically
 # Pretend this is CourseList's constructor
-for i in xrange(CourseList.max_courses):
+for i in range(CourseList.max_courses):
     course_name = 'Course '+str(i)
     course_key = 'course'+str(i)
     sf = wtforms.StringField(course_name)
