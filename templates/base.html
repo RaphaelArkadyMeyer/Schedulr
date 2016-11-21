@@ -1,0 +1,42 @@
+
+{% block doc -%}
+<!DOCTYPE html>
+<html{% block html_attribs %}{% endblock html_attribs %}>
+	{%- block html %}
+	<head>
+		{%- block head %}
+		<title>{% block title %}{% if title %}{{title}}{% else %}{{"Schedülr"}}{% endif %}{% endblock title %}</title>
+
+		{%- block metas %}
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		{%- endblock metas %}
+
+		{%- block styles %}
+		<!-- Bootstrap -->
+		{#<link href="{{bootstrap_find_resource('css/bootstrap.css', use_minified=False, cdn='bootstrap')}}" rel="stylesheet">#}
+		<link href="/stylesheets/bootstrap.css" rel="stylesheet">
+		<link href="/stylesheets/style.css" rel="stylesheet">
+		<link href="/stylesheets/navbar_override.css" rel="stylesheet">
+
+		{%- endblock styles %}
+		{%- endblock head %}
+	</head>
+	<body{% block body_attribs %}{% endblock body_attribs %}>
+		{% block body -%}
+		{% block navbar %}
+		{{ nav.navigate.render() }}
+		{%- endblock navbar %}
+		<div class="content">
+			{% block content -%}
+			{%- endblock content %}
+		</div>
+
+		{% block scripts %}
+		<script src="{{bootstrap_find_resource('jquery.js', cdn='jquery')}}"></script>
+		<script src="{{bootstrap_find_resource('js/bootstrap.js', cdn='bootstrap')}}"></script>
+		{%- endblock scripts %}
+		{%- endblock body %}
+	</body>
+	{%- endblock html %}
+</html>
+{% endblock doc -%}
