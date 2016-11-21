@@ -1,7 +1,9 @@
-{% extends "bootstrap/base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
+{% extends "base.html" %}
+{% import "wtf.html" as wtf %}
 {% block content %}
 	<form class="form" method="post" role="form">
+
+		{{ form.csrf_token }}
 		{{ form.hidden_tag() }}
 		{{ wtf.form_errors(form, hiddens="only") }}
 
