@@ -13,6 +13,7 @@ frontend = Blueprint('frontend', __name__)
 
 css_defs = {
         'color': {
+            'courses': ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'],
             'link':           '#0044ee',
             'header':         '#20083c',
             'headerSelected': '#431e6c',
@@ -25,17 +26,17 @@ css_defs = {
 class CourseList (FlaskForm):
     max_courses = 15
     course_keys = []
-    submit_button = wtforms.SubmitField(u"Schedüle",validators=[
-            #wtforms.validators.Optional(), \
-            wtforms.validators.Regexp(r'[a-zA-Z]+[0-9]+')
-            ])
+    submit_button = wtforms.SubmitField(u"Schedüle")
 
 # Modify CourseList dynamically
 # Pretend this is CourseList's constructor
 for i in xrange(CourseList.max_courses):
     course_name = 'Course '+str(i)
     course_key = 'course'+str(i)
-    sf = wtforms.StringField(course_name)
+    sf = wtforms.StringField(course_name,validators=[
+            wtforms.validators.Optional(),
+            wtforms.validators.Regexp(r'[a-zA-Z]+[0-9]+')
+            ])
     setattr(CourseList, course_key, sf)
     CourseList.course_keys.append(course_key)
 
@@ -60,11 +61,14 @@ Generates a schedule page
 @gen an iterable of strings
 """
 def generate_schedule(gen):
-    def schedule_generator():
+    def schedule_styler():
+        i = 0
         for [dept,num] in gen:
-            start_time   = safe_cast(num,int,0)
+            start_time   = safe_cast(num,int,0) % 1000
             days_of_week = [safe_cast(num,int,0) % 7]
             duration = 50
+            color = css_defs['color']['courses'][i % len(css_defs['color']['courses'])]
+            i+=1
             top = str(start_time - 0*7*60)+'px'
             size = str(duration) + 'px'
             for day in days_of_week:
@@ -78,23 +82,26 @@ def generate_schedule(gen):
                 elif day == 5:
                     left = '80%'
                 yield {
-                        'color': 'blue',
+                        'color': color,
                         'left':  left,
                         'top':   top,
                         'size':  size,
                     }
-    return flask.render_template('schedule.html', fields=schedule_generator())
+    return flask.render_template('schedule.html', fields=schedule_styler())
 
 
 @frontend.route('/select', methods=['GET','POST'])
 def make_schedule():
     form = CourseList()
     if form.validate_on_submit():
-        def get_course(course):
-            [name,number] = re.split(r'([a-zA-Z]+|[0-9]+)', course)
-            number = '{:<05d}'.format (number)
-        xs = (get_course(x.data) for x in form)
-        return generate_schedule(xs)
+        def preprocess_courses():
+            for key in form.course_keys:
+                course = form[key].data
+                if course:
+                    [name,number] = re.findall(r'[a-zA-Z]+|[0-9]+', course)
+                    number = '{:<05d}'.format( int(number) )
+                    yield [name,number]
+        return generate_schedule(preprocess_courses())
     return flask.render_template('select.html', form=form, renderer='bootstrap')
 
 @frontend.route('/images/<filename>')
