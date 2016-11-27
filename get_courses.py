@@ -22,6 +22,8 @@ def request_cache(payload, odata_type, key):
     cache = dict()
     for item in resp_list:  # Build map by given key
         cache[item[key]] = item  # list(item.values())  #
+        item['_id'] = item[key]
+        item['odata_type'] = odata_type
     return cache
 
 
