@@ -15,14 +15,18 @@ import logging
 from frontend import frontend
 
 from read_courses import CourseCache
+from pympler import asizeof
 
-# <<<<<<< HEAD
+import json
+
 def query_test(dept, number):
     CourseCache.wait_for_access()
     print('{} was found for {} {}'.format(CourseCache.query(dept, number), dept, number))
-# =======
+    # print(json.dumps(CourseCache.caches['Terms']))
+
 app = Flask (__name__)
 nav = Nav (app)
+
 
 @nav.navigation()
 def navigate():
@@ -30,9 +34,6 @@ def navigate():
             flask_nav.elements.View("Home",'frontend.get_index'),
             flask_nav.elements.View(u"Schedüle",'frontend.make_schedule'),
             )
-
-# if __name__ == "__main__":
-# >>>>>>> master
 
 def flask_startup():
     app = Flask (__name__)
@@ -57,14 +58,37 @@ def flask_startup():
 
 if __name__ == "__main__":
 
+    # tr = tracker.SummaryTracker()
+
     flask_thread = threading.Thread(target=flask_startup)
     flask_thread.start()
 
-    query_thread = threading.Thread(target=query_test, args=('CS', '25200'))
+    # tr = classtracker.ClassTracker()
+    # tr.track_class(dict)
+    # tr.create_snapshot()
+
+    query_thread = threading.Thread(target=query_test, args=('CS', '35200'))
     query_thread.start()
 
     cache_setup_thread = threading.Thread(target=CourseCache.setup())
     cache_setup_thread.start()
+
+    query_thread.join()
+    cache_setup_thread.join()
+
+    print('#####')
+    print('#+#+#')
+    print('# # #')
+    print('#+#+#')
+    print('#####')
+
+    # tr.create_snapshot()
+    # tr.stats.print_summary()
+    # tr.print_diff()
+
+    sizer = asizeof.Asizer()
+    sizer.asized(CourseCache.caches)
+    sizer.print_summary()
 
     some_lock = threading.Event()
     some_lock.wait()
