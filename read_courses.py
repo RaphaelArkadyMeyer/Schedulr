@@ -2,6 +2,7 @@ from datetime import datetime
 import os.path
 import json
 import threading
+import logging
 
 from get_courses import download_all_data
 
@@ -31,10 +32,9 @@ class CourseCache:
 
     @classmethod
     def setup(cls):
-        print("Getting caches....")
+        logging.info("Getting caches...")
         cls.caches = cls.__get_caches__('./CourseInfo.json')
-        print("Done!")
-        print("{} bytes read from file.".format(cls.caches.__sizeof__()))
+        logging.info('Done getting caches!')
 
         cls.subject_cache = cls.caches['Subjects']
         cls.course_cache = cls.caches['Courses']
@@ -53,7 +53,7 @@ class CourseCache:
         cls.meeting_lookup_table = \
             cls.__make_lookup_table__(cls.meeting_cache, 'SectionId')
 
-        print("Unlocking Caches access")
+        logging.info("Unlocking Caches access")
         cls.setup_lock.set()
 
     @classmethod
@@ -65,7 +65,8 @@ class CourseCache:
         if abbrev in subjects:
             return subjects[abbrev]
         else:
-            raise ValueError("Subject does not exists :{}".format(abbrev))
+            logging.error("Subject not found: {}".format(abbrev))
+            return None
 
     @classmethod
     def __make_query_table__(cls, subject_cache, course_cache):
@@ -100,50 +101,50 @@ class CourseCache:
     @classmethod
     def get_api_object(cls, odata_id, odata_type):
         if odata_type not in cls.caches:
-            print("{} is not a known odata type".format(odata_type))
+            logging.error("Unknown known odata type: {}".format(odata_type))
             return None
         cache = cls.caches[odata_type]
         if odata_id not in cache:
-            print("ID not found in cache")
+            logging.warn("ID not found in {}: {}".format(odata_type, odata_id))
             return None
         return cache[odata_id]
 
     @classmethod
     def get_course_ids(cls, dept, number):
         if dept not in cls.query_table:
-            print("Department given is invalid")
+            logging.warn("Department not found: {}".format(dept))
             return list()
         if number not in cls.query_table[dept]:
-            print("Course not found in deptartment")
+            logging.warn("Course not found in {}: {}".format(dept, number))
             return list()
         return cls.query_table[dept][number]
 
     @classmethod
     def get_api_class_ids(cls, course_id):
         if course_id not in cls.api_class_lookup_table:
-            print("Class not found in the cache")
+            logging.warn("Course not found: {}".format(course_id))
             return list()
         return cls.api_class_lookup_table[course_id]
 
     @classmethod
     def get_section_ids(cls, api_class_id):
         if api_class_id not in cls.section_lookup_table:
-            print("No class exists")
+            logging.warn("Class not found: {}".format(api_class_id))
             return list()
         return cls.section_lookup_table[api_class_id]
 
     @classmethod
     def get_meeting_ids(cls, section_id):
         if section_id not in cls.meeting_lookup_table:
-            print("No such section exists")
+            logging.warn("Section not found: {}".format(section_id))
             return list()
         return cls.meeting_lookup_table[section_id]
 
     @classmethod
     def parse_meeting_time(cls, meeting_time):
-        # Removes extra colon from time zone
+        # Removes unneeded timezone from input
         fixed_time = meeting_time[:19]
-        # print("Fixed: {}".format(fixed_time))
+        logging.debug("Parse Meeting String: {}".format(fixed_time))
         return datetime.strptime(fixed_time, '%Y-%m-%dT%H:%M:%S')
 
     @classmethod
@@ -153,8 +154,8 @@ class CourseCache:
             return None
 
         start_time = cls.parse_meeting_time(meeting['StartTime'])
-        print("\t\t\t{}".format(meeting))
-        print("\t\t\t{}".format(start_time))
+        logging.debug("\t\t\t{}".format(meeting))
+        logging.debug("\t\t\t{}".format(start_time))
         return meeting
 
     @classmethod
@@ -164,12 +165,11 @@ class CourseCache:
             return list()
 
         output = list()
-        print("\t\t{}".format(section))
+        logging.debug("\t\t{}".format(section))
         meeting_id_list = cls.get_meeting_ids(section_id)
         for meeting_id in meeting_id_list:
             meeting = cls.query_meeting_id(meeting_id)
             output.append(meeting)
-        print()
         return output
 
     @classmethod
@@ -178,12 +178,11 @@ class CourseCache:
         if api_class is None:
             return list()
 
-        print("\t{}".format(api_class))
+        logging.debug("\t{}".format(api_class))
         section_id_list = cls.get_section_ids(api_class_id)
         output = list()
         for section_id in section_id_list:
             output += cls.query_section_id(section_id)
-        print("---")
         return output
 
     @classmethod
@@ -193,7 +192,7 @@ class CourseCache:
             return list()
 
         output = list()
-        print(course['Title'])
+        logging.debug(course['Title'])
         api_class_id_list = cls.get_api_class_ids(course_id)
         for api_class_id in api_class_id_list:
             output += cls.query_api_class_id(api_class_id)
