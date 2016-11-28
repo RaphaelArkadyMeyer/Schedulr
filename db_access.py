@@ -2,9 +2,9 @@ from cloudant.client import Cloudant
 import json
 
 # HIDDEN FROM GITHUB. GET YOUR OWN KEY FROM BLUEMIX
-api_url  = 'https://user:pass@url-bluemix.cloudant.com'
-api_user = 'user'
-api_pass = 'pass'
+api_url  = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix:8bf2a56a17024e594f342b7c5870b90bb1e669260baecb8146285732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix.cloudant.com'
+api_user = '8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix'
+api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb8146285732fdf2ae6f'
 
 
 def queryFromDB(odata_id):
