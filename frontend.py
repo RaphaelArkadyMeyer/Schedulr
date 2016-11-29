@@ -32,7 +32,7 @@ class CourseList (FlaskForm):
 
 # Modify CourseList dynamically
 # Pretend this is CourseList's constructor
-for i in xrange(CourseList.max_courses):
+for i in range(CourseList.max_courses):
     course_name = 'Course '+str(i)
     course_key = 'course'+str(i)
     sf = wtforms.StringField(course_name,validators=[

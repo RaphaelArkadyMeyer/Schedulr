@@ -1,59 +1,68 @@
 from datetime import datetime
-import os.path
-import json
 import threading
+import logging
+import json
 
-from get_courses import download_all_data
+from cloudant.client import Cloudant
+from cloudant.document import Document
 
 
 class CourseCache:
 
-    caches = None
+    api_url = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
+              ':8bf2a56a17024e594f342b7c5870b90bb1e669260baecb81462' \
+              '85732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-' \
+              'bluemix.cloudant.com'
+    api_user = '8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix'
+    api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb814628' \
+               '5732fdf2ae6f'
 
-    subject_cache = None
-    course_cache = None
-    section_cache = None
-    api_class_cache = None
-    meeting_cache = None
+    section_lookup_db = None
+    meeting_lookup_db = None
+    api_class_lookup_db = None
+    query_table_db = None
 
     query_table = None
+
+    db_client = None
+    courses_db = None
 
     setup_lock = threading.Event()
 
     @classmethod
-    def __get_caches__(cls, file_path):
-        if not os.path.exists(file_path):
-            download_all_data(file_path)
-        f = open(file_path, 'r')
-        text = f.read()
-        f.close()
-        return json.loads(text)
+    def connect_to_db(cls):
+        if cls.db_client is not None:
+            logging.fatal("Tried to start a new DB connection"
+                          " while already connected.")
+            raise TypeError("Tried to start a new DB connection"
+                            " while already connected.")
+        cls.db_client = Cloudant(cls.api_user, cls.api_pass, url=cls.api_url)
+        cls.db_client.connect()
+        cls.courses_db = cls.db_client['purdue_courses']
+        logging.info("Cloudant connection is live.")
+
+    @classmethod
+    def disconnect_db(cls):
+        if cls.db_client is not Cloudant:
+            logging.fatal("Tried to close a nonexistant connection")
+            raise TypeError("Tried to close a nonexistant connection")
+        cls.db_client.disconnect()
+        cls.db_client = None
+        logging.info("Cloudant connection is dead.")
 
     @classmethod
     def setup(cls):
-        print("Getting caches....")
-        cls.caches = cls.__get_caches__('./CourseInfo.json')
-        print("Done!")
-        print("{} bytes read from file.".format(cls.caches.__sizeof__()))
+        logging.info('Opening Database Connections')
+        cls.connect_to_db()
 
-        cls.subject_cache = cls.caches['Subjects']
-        cls.course_cache = cls.caches['Courses']
-        cls.section_cache = cls.caches['Sections']
-        cls.api_class_cache = cls.caches['Classes']
-        cls.meeting_cache = cls.caches['Meetings']
+        cls.query_table_db = cls.db_client['query_table']
 
-        cls.query_table = cls.__make_query_table__(cls.subject_cache,
-                                                   cls.course_cache)
+        # 'api_class' used because 'class' is a keyword
+        cls.api_class_lookup_db = cls.db_client['api_class_lookup_table']
+        cls.section_lookup_db = cls.db_client['section_lookup_table']
+        cls.meeting_lookup_db = cls.db_client['meeting_lookup_table']
 
-        # api_class used because class is a keyword
-        cls.api_class_lookup_table = \
-            cls.__make_lookup_table__(cls.api_class_cache, 'CourseId')
-        cls.section_lookup_table = \
-            cls.__make_lookup_table__(cls.section_cache, 'ClassId')
-        cls.meeting_lookup_table = \
-            cls.__make_lookup_table__(cls.meeting_cache, 'SectionId')
-
-        print("Unlocking Caches access")
+        logging.info("Unlocking Caches access")
         cls.setup_lock.set()
 
     @classmethod
@@ -61,89 +70,54 @@ class CourseCache:
         cls.setup_lock.wait()
 
     @classmethod
-    def get_subject(cls, abbrev, subjects):
-        if abbrev in subjects:
-            return subjects[abbrev]
-        else:
-            raise ValueError("Subject does not exists :{}".format(abbrev))
-
-    @classmethod
-    def __make_query_table__(cls, subject_cache, course_cache):
-        query_table = dict()
-        for subject_id in subject_cache:
-            abbrev = subject_cache[subject_id]['Abbreviation']
-            query_table[abbrev] = dict()
-
-        for course_id in course_cache:
-            course = course_cache[course_id]
-            number = course['Number']
-            subject_id = course['SubjectId']
-            abbrev = subject_cache[subject_id]['Abbreviation']
-            subject_dict = query_table[abbrev]
-            if number not in subject_dict:
-                subject_dict[number] = list()
-            subject_dict[number].append(course_id)
-            query_table[abbrev] = subject_dict
-        return query_table
-
-    @classmethod
-    def __make_lookup_table__(cls, cache, odata_id_type):
-        lookup_table = dict()
-        for odata_id in cache:
-            entry = cache[odata_id]
-            lookup_id = entry[odata_id_type]
-            if lookup_id not in lookup_table:
-                lookup_table[lookup_id] = list()
-            lookup_table[lookup_id].append(odata_id)
-        return lookup_table
-
-    @classmethod
     def get_api_object(cls, odata_id, odata_type):
-        if odata_type not in cls.caches:
-            print("{} is not a known odata type".format(odata_type))
-            return None
-        cache = cls.caches[odata_type]
-        if odata_id not in cache:
-            print("ID not found in cache")
-            return None
-        return cache[odata_id]
+        out = cls.odata_from_db(odata_id)
+        if out['odata_type'] != odata_type:
+            logging.fatal('Bad reference for odata_type created')
+        return out
+
+    @classmethod
+    def odata_from_db(cls, odata_id):
+        logging.debug("Quering id={}".format(odata_id))
+
+        out = None
+        with Document(cls.courses_db, odata_id) as doc:
+            out = json.loads(doc.json())
+
+        return out
 
     @classmethod
     def get_course_ids(cls, dept, number):
-        if dept not in cls.query_table:
-            print("Department given is invalid")
+        try:
+            number_dict = cls.query_table_db[dept]
+            if number not in number_dict['dict']:
+                logging.warn("Course not found in {}: {}".format(dept, number))
+                return list()
+            return number_dict['dict'][number]
+        except (KeyError):
+            logging.warn('Department not found: {}'.format(dept))
             return list()
-        if number not in cls.query_table[dept]:
-            print("Course not found in deptartment")
-            return list()
-        return cls.query_table[dept][number]
 
     @classmethod
     def get_api_class_ids(cls, course_id):
-        if course_id not in cls.api_class_lookup_table:
-            print("Class not found in the cache")
-            return list()
-        return cls.api_class_lookup_table[course_id]
+        with Document(cls.api_class_lookup_db, course_id) as doc:
+            return doc['list']
 
     @classmethod
     def get_section_ids(cls, api_class_id):
-        if api_class_id not in cls.section_lookup_table:
-            print("No class exists")
-            return list()
-        return cls.section_lookup_table[api_class_id]
+        with Document(cls.section_lookup_db, api_class_id) as doc:
+            return doc['list']
 
     @classmethod
     def get_meeting_ids(cls, section_id):
-        if section_id not in cls.meeting_lookup_table:
-            print("No such section exists")
-            return list()
-        return cls.meeting_lookup_table[section_id]
+        with Document(cls.meeting_lookup_db, section_id) as doc:
+            return doc['list']
 
     @classmethod
     def parse_meeting_time(cls, meeting_time):
-        # Removes extra colon from time zone
+        # Removes unneeded timezone from input
         fixed_time = meeting_time[:19]
-        # print("Fixed: {}".format(fixed_time))
+        logging.debug("Parse Meeting String: {}".format(fixed_time))
         return datetime.strptime(fixed_time, '%Y-%m-%dT%H:%M:%S')
 
     @classmethod
@@ -153,8 +127,8 @@ class CourseCache:
             return None
 
         start_time = cls.parse_meeting_time(meeting['StartTime'])
-        print("\t\t\t{}".format(meeting))
-        print("\t\t\t{}".format(start_time))
+        logging.debug("\t\t\t{}".format(meeting))
+        logging.debug("\t\t\t{}".format(start_time))
         return meeting
 
     @classmethod
@@ -164,12 +138,11 @@ class CourseCache:
             return list()
 
         output = list()
-        print("\t\t{}".format(section))
+        logging.debug("\t\t{}".format(section))
         meeting_id_list = cls.get_meeting_ids(section_id)
         for meeting_id in meeting_id_list:
             meeting = cls.query_meeting_id(meeting_id)
             output.append(meeting)
-        print()
         return output
 
     @classmethod
@@ -178,12 +151,11 @@ class CourseCache:
         if api_class is None:
             return list()
 
-        print("\t{}".format(api_class))
+        logging.debug("\t{}".format(api_class))
         section_id_list = cls.get_section_ids(api_class_id)
         output = list()
         for section_id in section_id_list:
             output += cls.query_section_id(section_id)
-        print("---")
         return output
 
     @classmethod
@@ -193,7 +165,7 @@ class CourseCache:
             return list()
 
         output = list()
-        print(course['Title'])
+        logging.debug('Course title is {}'.format(course['Title']))
         api_class_id_list = cls.get_api_class_ids(course_id)
         for api_class_id in api_class_id_list:
             output += cls.query_api_class_id(api_class_id)
@@ -201,7 +173,6 @@ class CourseCache:
 
     @classmethod
     def query(cls, dept, number):
-        print()
         output = list()
         course_ids = cls.get_course_ids(dept, number)
         for course_id in course_ids:
