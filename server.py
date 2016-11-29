@@ -37,8 +37,6 @@ def navigate():
 
 
 def flask_startup():
-    logging.basicConfig(level=logging.INFO)
-
     # app.debug = True
     # app.use_reloader = False
     app.secret_key = 'super secret key'
@@ -58,17 +56,18 @@ def flask_startup():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     flask_thread = threading.Thread(target=flask_startup)
     flask_thread.start()
 
-    # query_thread = threading.Thread(target=query_test, args=('CS', '35200'))
-    # query_thread.start()
+    query_thread = threading.Thread(target=query_test, args=('CS', '35200'))
+    query_thread.start()
 
-    # cache_setup_thread = threading.Thread(target=CourseCache.setup())
-    # cache_setup_thread.start()
+    cache_setup_thread = threading.Thread(target=CourseCache.setup())
+    cache_setup_thread.start()
 
-    # query_thread.join()
-    # cache_setup_thread.join()
+    query_thread.join()
+    cache_setup_thread.join()
 
     some_lock = threading.Event()
     some_lock.wait()
