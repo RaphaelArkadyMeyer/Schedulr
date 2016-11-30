@@ -5,6 +5,7 @@ import json
 
 from cloudant.client import Cloudant
 from cloudant.document import Document
+from cloudant.result import Result
 
 
 class CourseCache:
@@ -17,12 +18,15 @@ class CourseCache:
     api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb814628' \
                '5732fdf2ae6f'
 
+    query_table_db = None
+    api_class_lookup_db = None
     section_lookup_db = None
     meeting_lookup_db = None
-    api_class_lookup_db = None
-    query_table_db = None
 
     query_table = None
+    api_class_lookup_table = None
+    section_lookup_table = None
+    meeting_lookup_table = None
 
     db_client = None
     courses_db = None
@@ -39,6 +43,7 @@ class CourseCache:
         cls.db_client = Cloudant(cls.api_user, cls.api_pass, url=cls.api_url)
         cls.db_client.connect()
         cls.courses_db = cls.db_client['purdue_courses']
+        cls.courses_db.all_docs
         logging.info("Cloudant connection is live.")
 
     @classmethod
@@ -64,6 +69,9 @@ class CourseCache:
 
         logging.info("Unlocking Caches access")
         cls.setup_lock.set()
+
+        logging.info('Downloading lookup tables from Cloudant...')
+        cls.get_table_from_db()
 
     @classmethod
     def wait_for_access(cls):
@@ -100,16 +108,34 @@ class CourseCache:
 
     @classmethod
     def get_api_class_ids(cls, course_id):
+        if course_id in cls.api_class_lookup_table:
+            return cls.api_class_lookup_table[course_id]
+
+        logging.warn('PurdueIo API Course object not found in local table.'
+                     ' Querying online database: {}'
+                     .format(course_id))
         with Document(cls.api_class_lookup_db, course_id) as doc:
             return doc['list']
 
     @classmethod
     def get_section_ids(cls, api_class_id):
+        if api_class_id in cls.section_lookup_table:
+            return cls.section_lookup_table[api_class_id]
+
+        logging.warn('PurdueIo API Class object not found in local table.'
+                     ' Querying online database: {}'
+                     .format(api_class_id))
         with Document(cls.section_lookup_db, api_class_id) as doc:
             return doc['list']
 
     @classmethod
     def get_meeting_ids(cls, section_id):
+        if section_id in cls.section_lookup_table:
+            return cls.section_lookup_table[section_id]
+
+        logging.warn('PurdueIo API Section object not found in local table.'
+                     ' Querying online database: {}'
+                     .format(section_id))
         with Document(cls.meeting_lookup_db, section_id) as doc:
             return doc['list']
 
@@ -179,3 +205,41 @@ class CourseCache:
             meeting_list = cls.query_course_id(course_id)
             output += meeting_list
         return output
+
+    @classmethod
+    def get_table_from_db(cls, package_size=5000):
+        results = Result(cls.query_table_db.all_docs,
+                         include_docs=True,
+                         page_size=package_size)
+        cls.query_table = dict()
+        for result in results:
+            cls.query_table[result['id']] = result['doc']['dict']
+        logging.info('query_table has {} documents'
+                     .format(len(cls.query_table)))
+
+        results = Result(cls.api_class_lookup_db.all_docs,
+                         include_docs=True,
+                         page_size=package_size)
+        cls.api_class_lookup_table = dict()
+        for result in results:
+            cls.api_class_lookup_table[result['id']] = result['doc']['list']
+        logging.info('api_class_lookup_table has {} documents'
+                     .format(len(cls.api_class_lookup_table)))
+
+        results = Result(cls.section_lookup_db.all_docs,
+                         include_docs=True,
+                         page_size=package_size)
+        cls.section_lookup_table = dict()
+        for result in results:
+            cls.section_lookup_table[result['id']] = result['doc']['list']
+        logging.info('section_lookup_table has {} documents'
+                     .format(len(cls.section_lookup_table)))
+
+        results = Result(cls.meeting_lookup_db.all_docs,
+                         include_docs=True,
+                         page_size=package_size)
+        cls.meeting_lookup_table = dict()
+        for result in results:
+            cls.meeting_lookup_table[result['id']] = result['doc']['list']
+        logging.info('meeting_lookup_table has {} documents'
+                     .format(len(cls.meeting_lookup_table)))
