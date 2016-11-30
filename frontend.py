@@ -3,6 +3,7 @@
 
 from flask import Blueprint
 from flask_wtf import FlaskForm
+import flask_nav.elements
 import wtforms
 import wtforms.validators
 import flask
@@ -29,6 +30,14 @@ class CourseList (FlaskForm):
     max_courses = 15
     course_keys = []
     submit_button = wtforms.SubmitField(u"Schedüle")
+
+
+def navigation_header():
+    return flask_nav.elements.Navbar(u"Schedülr",
+            flask_nav.elements.View("Home", 'frontend.get_index'),
+            flask_nav.elements.View(u"Schedüle", 'frontend.make_schedule'),
+            )
+
 
 # Modify CourseList dynamically
 # Pretend this is CourseList's constructor
