@@ -23,10 +23,10 @@ class CourseCache:
     section_lookup_db = None
     meeting_lookup_db = None
 
-    query_table = None
-    api_class_lookup_table = None
-    section_lookup_table = None
-    meeting_lookup_table = None
+    query_table = dict()
+    api_class_lookup_table = dict()
+    section_lookup_table = dict()
+    meeting_lookup_table = dict()
 
     db_client = None
     courses_db = None
