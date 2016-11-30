@@ -51,7 +51,7 @@ def flask_startup():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
 
     query_thread = threading.Thread(target=query_test, args=('CS', '35200'))
     query_thread.start()
