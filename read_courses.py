@@ -214,7 +214,7 @@ class CourseCache:
         cls.query_table = dict()
         for result in results:
             cls.query_table[result['id']] = result['doc']['dict']
-        logging.info('query_table has {} documents'
+        logging.info('Downloaded query_table has {} documents'
                      .format(len(cls.query_table)))
 
         results = Result(cls.api_class_lookup_db.all_docs,
@@ -223,7 +223,7 @@ class CourseCache:
         cls.api_class_lookup_table = dict()
         for result in results:
             cls.api_class_lookup_table[result['id']] = result['doc']['list']
-        logging.info('api_class_lookup_table has {} documents'
+        logging.info('Downloaded api_class_lookup_table has {} documents'
                      .format(len(cls.api_class_lookup_table)))
 
         results = Result(cls.section_lookup_db.all_docs,
@@ -232,7 +232,7 @@ class CourseCache:
         cls.section_lookup_table = dict()
         for result in results:
             cls.section_lookup_table[result['id']] = result['doc']['list']
-        logging.info('section_lookup_table has {} documents'
+        logging.info('Downloaded section_lookup_table has {} documents'
                      .format(len(cls.section_lookup_table)))
 
         results = Result(cls.meeting_lookup_db.all_docs,
@@ -241,5 +241,5 @@ class CourseCache:
         cls.meeting_lookup_table = dict()
         for result in results:
             cls.meeting_lookup_table[result['id']] = result['doc']['list']
-        logging.info('meeting_lookup_table has {} documents'
+        logging.info('Downloaded meeting_lookup_table has {} documents'
                      .format(len(cls.meeting_lookup_table)))
