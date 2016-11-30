@@ -56,7 +56,7 @@ def flask_startup():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     flask_thread = threading.Thread(target=flask_startup)
     flask_thread.start()
 
