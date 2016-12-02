@@ -25,7 +25,7 @@ a:hover {
 	position: relative;
 	left: 12.5%;
 	padding: 20px;
-	min-height: 500px;
+	min-height: 720px;
 	background-color: {{ color.neutral }};
 }
 
@@ -39,8 +39,29 @@ nav.navbar-default, nav{
 }
 
 .course {
+	margin-left: .333%;
 	position: absolute;
-	height: 60px;
-	width: 20%;
+	width: 16%;
+	color: white;
+	text-shadow:
+		-1px -1px 0 rgba(0,0,0,.5),
+		 1px -1px 0 rgba(0,0,0,.5),
+		-1px  1px 0 rgba(0,0,0,.5),
+		 1px  1px 0 rgba(0,0,0,.5);
+	padding: 0 5px;
+	font-size: 12px;
+}
 
+.day {
+	width: 16%;
+	height: 100%;
+	border-left: solid black 1px;
+	padding-left: 10px;
+	position: absolute;
+}
+
+.time {
+	width: 100%;
+	height: 60px;
+	border-bottom: solid black 1px;
 }

@@ -15,10 +15,12 @@ from frontend import navigation_header
 
 from read_courses import CourseCache
 
+import config as config
+
 
 def query_test(dept, number):
     CourseCache.wait_for_access()
-    meetings = CourseCache.query(dept, number)
+    meetings = [CourseCache.query_meeting_times(dept, number)]
     logging.info('{} Meetings found for {}{}'
                  .format(len(meetings), dept, number))
     for meeting in meetings:
@@ -34,8 +36,8 @@ def flask_startup():
     def navigate(): return navigation_header()
     nav.navigation(navigate())
 
-    app.secret_key = 'super secret key'
-    app.config.from_object('config')
+    app.secret_key = 'super duper secret key'
+    app.config.from_object('config.FlaskConfig')
 
     Bootstrap(app)
 
@@ -47,14 +49,17 @@ def flask_startup():
     nav.renderer(navigation_header())
 
     port = os.getenv("VCAP_APP_PORT", default=8000)
+
+    CourseCache.wait_for_access()
     app.run(host="0.0.0.0", port=int(port))
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=config.LOGGING_MODE)
 
-    query_thread = threading.Thread(target=query_test, args=('CS', '35200'))
-    query_thread.start()
+    if config.DO_SAMPLE_QUERY:
+        query_thread = threading.Thread(target=query_test, args=('CS', '35200'))
+        query_thread.start()
 
     cache_setup_thread = threading.Thread(target=CourseCache.setup)
     cache_setup_thread.start()

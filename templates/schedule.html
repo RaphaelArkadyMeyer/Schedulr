@@ -1,8 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
 	<div class="schedule">
+		{% for (day,offset) in days_of_the_week_offset %}
+			<div class="day" style="left: {{offset}};">{{ day }}</div>
+		{% endfor %}
+		{% for i in hours_of_the_day %}
+			<div class="time">{{ i }}</div>
+		{% endfor %}
 		{% for field in fields %}
-			<div class="course" style="background-color: {{ field.color }};top: {{ field.top }};left: {{ field.left }};">{{ field.description }}</div>
+			<div class="course" style="background-color: {{ field.color }};top: {{ field.top }};height:{{field.height}};left: {{ field.left }};">{{ field.description }}</div>
 		{% endfor %}
 	</div>
 {% endblock %}

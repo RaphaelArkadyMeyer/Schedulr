@@ -11,10 +11,10 @@ from cloudant.result import Result
 
 class CourseCache:
 
-    api_url = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
-              ':8bf2a56a17024e594f342b7c5870b90bb1e669260baecb81462' \
-              '85732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-' \
-              'bluemix.cloudant.com'
+    api_url  = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
+               ':8bf2a56a17024e594f342b7c5870b90bb1e669260baecb81462' \
+               '85732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-' \
+               'bluemix.cloudant.com'
     api_user = '8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix'
     api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb814628' \
                '5732fdf2ae6f'
@@ -209,7 +209,22 @@ class CourseCache:
         output['DictLists'] = output_list
         return output
 
-    # Gets the dit of api_class to (dict of section -> list(meetings))
+    # Gets the dict of api_class to (dict of section -> list(meetings))
+    """
+    Returns block of meeting information
+    @cls    The CourseCache class
+    @dept   The department (i.e. "CS")
+    @number The course number (i.e. 25200)
+    """
+    @classmethod
+    def query_meeting_times(cls, dept, number):
+        q = CourseCache.query(dept, number)
+        output = list()
+        for dict_list in q[0]['DictLists']:
+            for section_dict in dict_list:
+                output += section_dict['Meetings']
+        return output
+
     @classmethod
     def query(cls, dept, number):
         output = list()
