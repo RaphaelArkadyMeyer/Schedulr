@@ -34,6 +34,16 @@ nav.navbar-default, nav{
 	border-radius: 0;
 }
 
+.form-group {
+	transition: all .25s;
+}
+
+.form-hidden {
+	opacity: 0;
+	height: 0;
+	margin: 0;
+}
+
 .schedule {
 	position: relative;
 }

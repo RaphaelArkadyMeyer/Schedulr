@@ -137,6 +137,10 @@ def make_schedule():
         return generate_schedule(preprocess_courses())
     return flask.render_template('select.html', form=form, renderer='bootstrap')
 
+@frontend.route('/scripts/<filename>')
+def get_script(filename):
+    return flask.send_from_directory('static/scripts', filename)
+
 @frontend.route('/images/<filename>')
 def get_image(filename):
     return flask.send_from_directory('static/images', filename)
