@@ -19,7 +19,7 @@ frontend = Blueprint('frontend', __name__)
 
 css_defs = {
         'color': {
-            'courses': ['#B57EDC', '#DB7DD3 ', '#DB7DA4', '#DB857D', '#DBB47D', '#D3DB7D', '#A4DB7D', '#7DDB85'], #'#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'],
+            'courses': ['#B57EDC', '#DB7DD3 ', '#DB7DA4', '#DB857D', '#DBB47D', '#D3DB7D', '#A4DB7D', '#7DDB85'],
             'link':           '#0044ee',
             'header':         '#20083c',
             'headerSelected': '#431e6c',
@@ -36,9 +36,8 @@ class CourseList (FlaskForm):
 
 
 def navigation_header():
-    return flask_nav.elements.Navbar(u"Schedülr",
-            flask_nav.elements.View("Home", 'frontend.get_index'),
-            flask_nav.elements.View(u"Schedüle", 'frontend.make_schedule'),
+    return flask_nav.elements.Navbar(
+            flask_nav.elements.View(u"Schedülr", 'frontend.make_schedule'),
             )
 
 
