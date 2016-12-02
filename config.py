@@ -8,6 +8,6 @@ class FlaskConfig(object):
     TEMPLATES_AUTO_RELOAD = True
 
 # Our options
-LOGGING_MODE = logging.INFO
+LOGGING_MODE = logging.DEBUG
 DO_SAMPLE_QUERY = False
 COURSE_CACHE_DOWNLOAD = True
