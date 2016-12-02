@@ -219,6 +219,8 @@ class CourseCache:
     @classmethod
     def query_meeting_times(cls, dept, number):
         q = CourseCache.query(dept, number)
+        if not q:
+            return []
         output = list()
         for dict_list in q[0]['DictLists']:
             for section_dict in dict_list:
