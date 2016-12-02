@@ -117,7 +117,7 @@ class CourseCache:
                      ' Querying online database: {}'
                      .format(course_id))
         with Document(cls.api_class_lookup_db, course_id) as doc:
-            return doc['list']
+            return doc.get('list',[])
 
     @classmethod
     def get_section_ids(cls, api_class_id):
