@@ -1,17 +1,22 @@
 {% extends "base.html" %}
 {% import "wtf.html" as wtf %}
 {% block content %}
-	<form class="form" method="post" role="form">
+<form class="form" method="post" role="form">
 
-		{{ form.csrf_token }}
-		{{ form.hidden_tag() }}
-		{{ wtf.form_errors(form, hiddens="only") }}
+	{{ form.csrf_token }}
+	{{ form.hidden_tag() }}
+	{{ wtf.form_errors(form, hiddens="only") }}
 
+	{{ wtf.form_field(form.gap_preference) }}
+	{{ wtf.form_field(form.time_preference) }}
+
+	<div class="courses">
 		{% for key in form.course_keys %}
-			{{ wtf.form_field(form[key]) }}
+		{{ wtf.form_field(form[key]) }}
 		{% endfor %}
-		{{ wtf.form_field(form.submit_button) }}
+	</div>
+	{{ wtf.form_field(form.submit_button) }}
 
-	</form>
-	<script src="/scripts/select.js"></script>
+</form>
+<script src="/scripts/select.js"></script>
 {% endblock %}

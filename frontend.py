@@ -28,20 +28,29 @@ css_defs = {
             },
         }
 
+days_of_the_week_offset = [
+        ('Monday',    '16.666%'),
+        ('Tuesday',   '33.333%'),
+        ('Wednesday', '50%'),
+        ('Thursday',  '66.666%'),
+        ('Friday',    '83.333%')]
+hours_of_the_day = [str(t)+":00AM" for t in range(7,12+1)] + [str(t)+":00PM" for t in range(1,7+1)]
 
 class CourseList (FlaskForm):
     max_courses = 15
     course_keys = []
     submit_button = wtforms.SubmitField(u"Schedüle")
-
-
-def navigation_header():
-    return flask_nav.elements.Navbar(
-            flask_nav.elements.View(u"Schedülr", 'frontend.make_schedule'),
-            flask_nav.elements.View(u"Schedüle", 'frontend.make_schedule'),
+    gap_preference = wtforms.SelectField(
+            "Gap between classes",
+            validators = [],
+            coerce = int,
+            choices = list(zip(range(7), map(lambda x: str(x) + " hours", range(7))))
             )
-
-
+    time_preference = wtforms.SelectField(
+            "Preferred class time",
+            validators = [],
+            choices = list(zip(hours_of_the_day,hours_of_the_day))
+            )
 # Modify CourseList dynamically
 # Pretend this is CourseList's constructor
 for i in range(CourseList.max_courses):
@@ -53,6 +62,12 @@ for i in range(CourseList.max_courses):
             ])
     setattr(CourseList, course_key, sf)
     CourseList.course_keys.append(course_key)
+
+def navigation_header():
+    return flask_nav.elements.Navbar(
+            flask_nav.elements.View(u"Schedülr", 'frontend.make_schedule'),
+            flask_nav.elements.View(u"Schedüle", 'frontend.make_schedule'),
+            )
 
 @frontend.route('/')
 def get_index():
@@ -71,13 +86,6 @@ def safe_cast(from_object, to_type, default=None):
     except (ValueError, TypeError):
         return default
 
-days_of_the_week_offset = [
-        ('Monday',    '16.666%'),
-        ('Tuesday',   '33.333%'),
-        ('Wednesday', '50%'),
-        ('Thursday',  '66.666%'),
-        ('Friday',    '83.333%')]
-hours_of_the_day = [str(t)+":00AM" for t in range(7,12+1)] + [str(t)+":00PM" for t in range(1,7+1)]
 
 def day_of_week_to_offset(day):
     x =  {

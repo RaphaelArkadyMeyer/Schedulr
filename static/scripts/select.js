@@ -1,6 +1,6 @@
 
 document.addEventListener("DOMContentLoaded", function(event) {
-	var fields = document.querySelectorAll('form>div.form-group');
+	var fields = document.querySelectorAll('form>div.courses>div.form-group');
 	function hideFields() {
 		var lastVisible = 0;
 		for (var i = fields.length-1; i >= 0; i--) {

@@ -34,14 +34,18 @@ nav.navbar-default, nav{
 	border-radius: 0;
 }
 
-.form-group {
-	transition: all .25s;
+.form-group,
+.form-group * {
+	transition: all .5s;
 }
 
-.form-hidden {
-	opacity: 0;
+.form-hidden,
+.form-hidden * {
 	height: 0;
 	margin: 0;
+	padding: 0;
+	font-size: 0;
+	opacity: 0;
 }
 
 .schedule {
