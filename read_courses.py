@@ -2,6 +2,7 @@ from datetime import datetime
 import threading
 import logging
 import json
+import config
 
 from cloudant.client import Cloudant
 from cloudant.document import Document
@@ -70,8 +71,9 @@ class CourseCache:
         logging.info("Unlocking Caches access")
         cls.setup_lock.set()
 
-        logging.info('Downloading lookup tables from Cloudant...')
-        cls.get_table_from_db()
+        if config.COURSE_CACHE_DOWNLOAD:
+            logging.info('Downloading lookup tables from Cloudant...')
+            cls.get_table_from_db()
 
     @classmethod
     def wait_for_access(cls):
@@ -146,7 +148,7 @@ class CourseCache:
         logging.debug("Parse Meeting String: {}".format(fixed_time))
         return datetime.strptime(fixed_time, '%Y-%m-%dT%H:%M:%S')
 
-    @classmethod
+    @classmethod  # Gets the actual meeting for an id
     def query_meeting_id(cls, meeting_id):
         meeting = cls.get_api_object(meeting_id, 'Meetings')
         if meeting is None:
@@ -157,53 +159,64 @@ class CourseCache:
         logging.debug("\t\t\t{}".format(start_time))
         return meeting
 
-    @classmethod
+    @classmethod  # Gets the list of meetings for a section
     def query_section_id(cls, section_id):
         section = cls.get_api_object(section_id, 'Sections')
         if section is None:
             return list()
 
-        output = list()
+        output_list = list()
         logging.debug("\t\t{}".format(section))
         meeting_id_list = cls.get_meeting_ids(section_id)
         for meeting_id in meeting_id_list:
             meeting = cls.query_meeting_id(meeting_id)
-            output.append(meeting)
+            output_list.append(meeting)
+        output = dict()
+        output['Section'] = section
+        output['Meetings'] = output_list
         return output
 
-    @classmethod
+    @classmethod  # Gets the dict of section -> list(meetings) for an api_class
     def query_api_class_id(cls, api_class_id):
+        # good_campus = '983c3fdc-f3f0-4f0b-a31c-c6f417e186fd'
         api_class = cls.get_api_object(api_class_id, 'Classes')
-        if api_class is None:
+        if api_class is None:  # or api_class['CampusId'] is not good_campus:
             return list()
 
         logging.debug("\t{}".format(api_class))
         section_id_list = cls.get_section_ids(api_class_id)
         output = list()
         for section_id in section_id_list:
-            output += cls.query_section_id(section_id)
+            # Dictionary value = List of meetings
+            output.append(cls.query_section_id(section_id))
         return output
 
+    # Gets the dict of api_class to (dict of section -> list(meetings))
+    # for a course
     @classmethod
     def query_course_id(cls, course_id):
         course = cls.get_api_object(course_id, 'Courses')
         if course is None:
-            return list()
+            return dict()
 
-        output = list()
+        output = dict()
+        output['Course'] = course
+        output_list = list()
         logging.debug('Course title is {}'.format(course['Title']))
         api_class_id_list = cls.get_api_class_ids(course_id)
         for api_class_id in api_class_id_list:
-            output += cls.query_api_class_id(api_class_id)
+            output_list.append(cls.query_api_class_id(api_class_id))
+        output['DictLists'] = output_list
         return output
 
+    # Gets the dit of api_class to (dict of section -> list(meetings))
     @classmethod
     def query(cls, dept, number):
         output = list()
         course_ids = cls.get_course_ids(dept, number)
         for course_id in course_ids:
-            meeting_list = cls.query_course_id(course_id)
-            output += meeting_list
+            meeting_dict = cls.query_course_id(course_id)
+            output.append(meeting_dict)
         return output
 
     @classmethod
