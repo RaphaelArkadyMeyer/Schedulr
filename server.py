@@ -18,7 +18,7 @@ from read_courses import CourseCache
 
 def query_test(dept, number):
     CourseCache.wait_for_access()
-    meetings = CourseCache.query(dept, number)
+    meetings = [CourseCache.query_meeting_times(dept, number)]
     logging.info('{} Meetings found for {}{}'
                  .format(len(meetings), dept, number))
     for meeting in meetings:
@@ -47,6 +47,8 @@ def flask_startup():
     nav.renderer(navigation_header())
 
     port = os.getenv("VCAP_APP_PORT", default=8000)
+
+    CourseCache.wait_for_access()
     app.run(host="0.0.0.0", port=int(port))
 
 

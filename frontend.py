@@ -12,11 +12,14 @@ from read_courses import CourseCache
 
 import re
 
+from django import template
+register = template.Library()
+
 frontend = Blueprint('frontend', __name__)
 
 css_defs = {
         'color': {
-            'courses': ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'],
+            'courses': ['#B57EDC', '#DB7DD3 ', '#DB7DA4', '#DB857D', '#DBB47D', '#D3DB7D', '#A4DB7D', '#7DDB85'],
             'link':           '#0044ee',
             'header':         '#20083c',
             'headerSelected': '#431e6c',
@@ -33,8 +36,8 @@ class CourseList (FlaskForm):
 
 
 def navigation_header():
-    return flask_nav.elements.Navbar(u"Schedülr",
-            flask_nav.elements.View("Home", 'frontend.get_index'),
+    return flask_nav.elements.Navbar(
+            flask_nav.elements.View(u"Schedülr", 'frontend.make_schedule'),
             flask_nav.elements.View(u"Schedüle", 'frontend.make_schedule'),
             )
 
@@ -67,45 +70,56 @@ def safe_cast(from_object, to_type, default=None):
         return to_type(from_object)
     except (ValueError, TypeError):
         return default
+
+days_of_the_week_offset = [
+        ('Monday',    '16.666%'),
+        ('Tuesday',   '33.333%'),
+        ('Wednesday', '50%'),
+        ('Thursday',  '66.666%'),
+        ('Friday',    '83.333%')]
+hours_of_the_day = [str(t)+":00AM" for t in range(7,12+1)] + [str(t)+":00PM" for t in range(1,7+1)]
+
+def day_of_week_to_offset(day):
+    x =  {
+            'Monday'    : '16.666%',
+            'Tuesday'   : '33.333%',
+            'Wednesday' : '50%',
+            'Thursday'  : '66.666%',
+            'Friday'    : '83.333%'
+    }.get(day, 0)
+    return x
+
 """
 Generates a schedule page
-@gen an iterable of strings
+@gen an iterable of course strings (i.e. "CS252" or "CS25200")
 """
 def generate_schedule(gen):
     def schedule_styler():
         i = -1
         for [dept,num] in gen:
-            i+=1
-            try:
-                course_data = CourseCache.get_course_ids(dept,num)
-            except ValueError as v:
-                print (v)
-                continue
-            start_time   = safe_cast(num,int,0) % 1000
-            days_of_week = [safe_cast(num,int,0) % 7]
-            duration = 50
-            description = course_data[0]
-            color = css_defs['color']['courses'][i % len(css_defs['color']['courses'])]
-            top = str(start_time - 0*7*60)+'px'
-            size = str(duration) + 'px'
-            for day in days_of_week:
-                left = '0'
-                if day == 2:
-                    left = '20%'
-                elif day == 3:
-                    left = '40%'
-                elif day == 4:
-                    left = '60%'
-                elif day == 5:
-                    left = '80%'
-                yield {
-                        'description': description,
-                        'color':       color,
-                        'left':        left,
-                        'top':         top,
-                        'size':        size,
-                    }
-    return flask.render_template('schedule.html', fields=schedule_styler())
+            meetings = CourseCache.query_meeting_times(dept,num)
+            for meeting in meetings:
+                i            += 1
+                start_time   =  CourseCache.parse_meeting_time(meeting['StartTime'])
+                days_of_week =  map(day_of_week_to_offset, meeting['DaysOfWeek'].split(', '))
+                duration     =  50
+                description  =  dept+num+' '+meeting['Type']
+                color        =  css_defs['color']['courses'][i % len(css_defs['color']['courses'])]
+                top          =  str((start_time.hour-7)*60 + start_time.minute - 2.5) + 'px'
+                height       =  str(duration-5) + 'px'
+                for left in days_of_week:
+                    yield {
+                            'description': description,
+                            'color':       color,
+                            'left':        left,
+                            'top':         top,
+                            'height':      height,
+                        }
+    return flask.render_template(
+            'schedule.html',
+            fields=schedule_styler(),
+            days_of_the_week_offset=days_of_the_week_offset,
+            hours_of_the_day=hours_of_the_day)
 
 
 @frontend.route('/select', methods=['GET','POST'])
@@ -131,5 +145,4 @@ def get_image(filename):
 def get_stylesheets(filename):
     print ("stylesheet "+filename)
     return flask.send_from_directory('static/stylesheets', filename)
-
 
