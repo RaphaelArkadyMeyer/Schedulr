@@ -12,9 +12,6 @@ from read_courses import CourseCache
 
 import re
 
-from django import template
-register = template.Library()
-
 frontend = Blueprint('frontend', __name__)
 
 css_defs = {

@@ -1,4 +1,3 @@
-
 import logging
 
 # Flask specific options
@@ -11,3 +10,4 @@ class FlaskConfig(object):
 # Our options
 LOGGING_MODE = logging.INFO
 DO_SAMPLE_QUERY = False
+COURSE_CACHE_DOWNLOAD = False

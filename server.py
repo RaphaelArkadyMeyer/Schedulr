@@ -5,7 +5,6 @@ from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_appconfig import AppConfig
 from flask_nav import Nav
-import flask_nav.elements
 
 import os
 import threading
@@ -27,13 +26,14 @@ def query_test(dept, number):
         logging.debug(meeting)
 
 
-
 def flask_startup():
     app = Flask(__name__)
     nav = Nav(app)
 
     @nav.navigation()
-    def navigate(): return navigation_header()
+    def navigate():
+        return navigation_header()
+
     nav.navigation(navigate())
 
     app.secret_key = 'super duper secret key'
@@ -58,7 +58,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=config.LOGGING_MODE)
 
     if config.DO_SAMPLE_QUERY:
-        query_thread = threading.Thread(target=query_test, args=('CS', '35200'))
+        query_thread = threading.Thread(target=query_test,
+                                        args=('CS', '35200'))
         query_thread.start()
 
     cache_setup_thread = threading.Thread(target=CourseCache.setup)
