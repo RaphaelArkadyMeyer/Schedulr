@@ -9,5 +9,5 @@ class FlaskConfig(object):
     TEMPLATES_AUTO_RELOAD = True
 
 # Our options
-LOGGING_MODE = logging.BASIC_FORMAT
+LOGGING_MODE = logging.INFO
 DO_SAMPLE_QUERY = False
