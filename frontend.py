@@ -38,6 +38,7 @@ class CourseList (FlaskForm):
 def navigation_header():
     return flask_nav.elements.Navbar(
             flask_nav.elements.View(u"Schedülr", 'frontend.make_schedule'),
+            flask_nav.elements.View(u"Schedüle", 'frontend.make_schedule'),
             )
 
 
