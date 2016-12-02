@@ -65,13 +65,14 @@ for i in range(CourseList.max_courses):
 
 def navigation_header():
     return flask_nav.elements.Navbar(
-            flask_nav.elements.View(u"Schedülr", 'frontend.make_schedule'),
+            flask_nav.elements.View(u"Schedülr", 'frontend.get_index'),
             flask_nav.elements.View(u"Schedüle", 'frontend.make_schedule'),
             )
 
 @frontend.route('/')
 def get_index():
-    return flask.render_template("base.html", mimetype="text/html")
+    #return flask.render_template("base.html", mimetype="text/html")
+    return flask.redirect("select", code=302)
 
 @frontend.route('/stylesheets/style.css')
 def get_main_stylesheet():
