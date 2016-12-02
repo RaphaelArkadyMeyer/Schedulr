@@ -9,10 +9,10 @@ from cloudant.document import Document
 
 class CourseCache:
 
-    api_url = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
-              ':8bf2a56a17024e594f342b7c5870b90bb1e669260baecb81462' \
-              '85732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-' \
-              'bluemix.cloudant.com'
+    api_url  = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
+               ':8bf2a56a17024e594f342b7c5870b90bb1e669260baecb81462' \
+               '85732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-' \
+               'bluemix.cloudant.com'
     api_user = '8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix'
     api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb814628' \
                '5732fdf2ae6f'
@@ -171,11 +171,18 @@ class CourseCache:
             output += cls.query_api_class_id(api_class_id)
         return output
 
+    """
+    Returns lists of meetings
+    @cls    The CourseCache class
+    @dept   The department (i.e. "CS")
+    @number The course number (i.e. 25200)
+    """
     @classmethod
-    def query(cls, dept, number):
-        output = list()
+    def query_meeting_times(cls, dept, number):
         course_ids = cls.get_course_ids(dept, number)
         for course_id in course_ids:
             meeting_list = cls.query_course_id(course_id)
-            output += meeting_list
-        return output
+            for meeting in meeting_list:
+                yield meeting
+
+
