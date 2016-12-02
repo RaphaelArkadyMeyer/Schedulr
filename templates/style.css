@@ -39,6 +39,7 @@ nav.navbar-default, nav{
 }
 
 .course {
+	margin-left: .333%;
 	position: absolute;
 	width: 16%;
 	color: white;
@@ -48,12 +49,19 @@ nav.navbar-default, nav{
 		-1px  1px 0 rgba(0,0,0,.5),
 		 1px  1px 0 rgba(0,0,0,.5);
 	padding: 0 5px;
+	font-size: 12px;
+}
+
+.day {
+	width: 16%;
+	height: 100%;
+	border-left: solid black 1px;
+	padding-left: 10px;
+	position: absolute;
 }
 
 .time {
-	{#background-color: grey;#}
 	width: 100%;
 	height: 60px;
 	border-bottom: solid black 1px;
-
 }
