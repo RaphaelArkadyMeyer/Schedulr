@@ -8,6 +8,8 @@ import wtforms
 import wtforms.validators
 import flask
 
+import course_maker
+
 from read_courses import CourseCache
 
 import re
@@ -39,7 +41,7 @@ class CourseList (FlaskForm):
     submit_button = wtforms.SubmitField(u"Schedüle")
     gap_preference = wtforms.SelectField(
             "Gaps between classes",
-            validators = [wtforms.validators.NumberRange(min=0, message="Gap must be greater than zero")],
+            coerce = int,
             choices = [(0,'Bunch it up'),(1,'Hour breaks'),(2,'All at once')]
             )
     time_preference = wtforms.IntegerField(
@@ -104,7 +106,7 @@ Generates a schedule page
 def generate_schedule(gen):
     def schedule_styler():
         i = -1
-        for [dept,num] in gen:
+        for (dept,num) in gen:
             meetings = CourseCache.query_meeting_times(dept,num)
             for meeting in meetings:
                 i            += 1
@@ -141,7 +143,7 @@ def make_schedule():
                     [name,number] = re.findall(r'[a-zA-Z]+|[0-9]+', course)
                     name = name.upper()
                     number = '{:<05d}'.format( int(number) )
-                    yield [name,number]
+                    yield (name,number)
         return generate_schedule(preprocess_courses())
     return flask.render_template(
             'select.html',
