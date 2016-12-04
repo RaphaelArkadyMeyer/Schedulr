@@ -38,27 +38,29 @@ class CourseList (FlaskForm):
     course_keys = []
     submit_button = wtforms.SubmitField(u"Schedüle")
     gap_preference = wtforms.SelectField(
-            "Gap between classes",
-            validators = [],
-            coerce = int,
-            choices = list(zip(range(7), map(lambda x: str(x) + " hours", range(7))))
+            "Gaps between classes",
+            validators = [wtforms.validators.NumberRange(min=0, message="Gap must be greater than zero")],
+            choices = [(0,'Bunch it up'),(1,'Hour breaks'),(2,'All at once')]
             )
-    time_preference = wtforms.SelectField(
+    time_preference = wtforms.IntegerField(
             "Preferred class time",
-            validators = [],
-            choices = list(zip(hours_of_the_day,hours_of_the_day))
+            validators = [wtforms.validators.NumberRange(min=7, max=19, message='Invalid timeslot')],
             )
-# Modify CourseList dynamically
-# Pretend this is CourseList's constructor
-for i in range(CourseList.max_courses):
-    course_name = 'Course '+str(i)
-    course_key = 'course'+str(i)
-    sf = wtforms.StringField(course_name,validators=[
-            wtforms.validators.Optional(),
-            wtforms.validators.Regexp(r'[a-zA-Z]+[0-9]+')
-            ])
-    setattr(CourseList, course_key, sf)
-    CourseList.course_keys.append(course_key)
+
+
+def CourseList_static_constructor():
+    # Modify CourseList dynamically
+    # Pretend this is CourseList's constructor
+    for i in range(CourseList.max_courses):
+        course_name = 'Course '+str(i)
+        course_key = 'course'+str(i)
+        sf = wtforms.StringField(course_name,validators=[
+                wtforms.validators.Optional(),
+                wtforms.validators.Regexp(r'[a-zA-Z]+[0-9]+')
+                ])
+        setattr(CourseList, course_key, sf)
+        CourseList.course_keys.append(course_key)
+CourseList_static_constructor()
 
 def navigation_header():
     return flask_nav.elements.Navbar(
@@ -141,7 +143,11 @@ def make_schedule():
                     number = '{:<05d}'.format( int(number) )
                     yield [name,number]
         return generate_schedule(preprocess_courses())
-    return flask.render_template('select.html', form=form, renderer='bootstrap')
+    return flask.render_template(
+            'select.html',
+            form=form,
+            hours_of_the_day=hours_of_the_day,
+            renderer='bootstrap')
 
 @frontend.route('/scripts/<filename>')
 def get_script(filename):

@@ -8,11 +8,34 @@
 	{{ wtf.form_errors(form, hiddens="only") }}
 
 	{{ wtf.form_field(form.gap_preference) }}
-	{{ wtf.form_field(form.time_preference) }}
+	{# <div class="form-group">
+		{{ form.gap_preference.label(class="control-label")|safe }}
+		<span id='gap_preference_display'></span>
+		{{ form.gap_preference(
+			class="form-control",
+			type="range",
+			min="0",
+			max="12",
+			step="1",
+		)|safe }}
+	</div> #}
+
+	{# { wtf.form_field(form.time_preference) } #}
+	<div class="form-group">
+		{{ form.time_preference.label(class="control-label")|safe }}
+		<span id='time_preference_display'></span>
+		{{ form.time_preference(
+			class="form-control",
+			type="range",
+			min="7",
+			max="19",
+			step="1",
+		)|safe }}
+	</div>
 
 	<div class="courses">
 		{% for key in form.course_keys %}
-		{{ wtf.form_field(form[key]) }}
+			{{ wtf.form_field(form[key]) }}
 		{% endfor %}
 	</div>
 	{{ wtf.form_field(form.submit_button) }}
