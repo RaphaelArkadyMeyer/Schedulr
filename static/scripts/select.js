@@ -14,9 +14,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		}
 		for (var i = 0; i < fields.length; i++) {
 			if (i <= lastVisible) {
-				fields[i].classList.remove("form-hidden");
+				fields[i].classList.add   ("form-revealed");
 			} else {
-				fields[i].classList.add   ("form-hidden");
+				fields[i].classList.remove("form-revealed");
 			}
 		}
 	}
