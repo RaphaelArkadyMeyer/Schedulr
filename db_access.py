@@ -2,9 +2,13 @@ from cloudant.client import Cloudant
 import json
 
 # HIDDEN FROM GITHUB. GET YOUR OWN KEY FROM BLUEMIX
-api_url  = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix:8bf2a56a17024e594f342b7c5870b90bb1e669260baecb8146285732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix.cloudant.com'
+api_url = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
+          ':8bf2a56a17024e594f342b7c5870b90bb1e669260baecb81462' \
+          '85732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-' \
+          'bluemix.cloudant.com'
 api_user = '8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix'
-api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb8146285732fdf2ae6f'
+api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb814628' \
+           '5732fdf2ae6f'
 
 
 def bulk_upload(cache, database, messageSize=2000):
@@ -99,7 +103,8 @@ def __make_lookup_table__(cache, odata_lookup_type):
     return lookup_table
 
 
-def write_tables():
+# Writes lookup tables to the database
+def write_lookup_tables():
     client = Cloudant(api_user, api_pass, url=api_url)
     # or using url
     # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
@@ -141,6 +146,7 @@ def write_tables():
     client.disconnect()
 
 
+# Writes all courses to the database
 def write_all_to_db():
     client = Cloudant(api_user, api_pass, url=api_url)
     # or using url
@@ -170,5 +176,5 @@ def write_all_to_db():
     client.disconnect()
 
 
-# write_tables()
+write_lookup_tables()
 # write_all_to_db()

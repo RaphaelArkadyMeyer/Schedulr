@@ -4,6 +4,8 @@ import logging
 import json
 import config
 
+import timeit
+
 from cloudant.client import Cloudant
 from cloudant.document import Document
 from cloudant.result import Result
@@ -19,6 +21,8 @@ class CourseCache:
     api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb814628' \
                '5732fdf2ae6f'
 
+    db_client = None
+
     query_table_db = None
     api_class_lookup_db = None
     section_lookup_db = None
@@ -29,8 +33,8 @@ class CourseCache:
     section_lookup_table = dict()
     meeting_lookup_table = dict()
 
-    db_client = None
     courses_db = None
+    api_object_cache = dict()
 
     setup_lock = threading.Event()
 
@@ -72,8 +76,7 @@ class CourseCache:
         cls.setup_lock.set()
 
         if config.COURSE_CACHE_DOWNLOAD:
-            logging.info('Downloading lookup tables from Cloudant...')
-            cls.get_table_from_db()
+            cls.get_tables_from_db()
 
     @classmethod
     def wait_for_access(cls):
@@ -117,8 +120,7 @@ class CourseCache:
                      ' Querying online database: {}'
                      .format(course_id))
         with Document(cls.api_class_lookup_db, course_id) as doc:
-            # TODO REUPLOAD API_CLASS_LOOKUP DATABASE TO CLOUDANT
-            return doc.get('list', [])
+            return doc['list']
 
     @classmethod
     def get_section_ids(cls, api_class_id):
@@ -238,7 +240,7 @@ class CourseCache:
         return output
 
     @classmethod
-    def get_table_from_db(cls, package_size=5000):
+    def get_tables_from_db(cls, package_size=5000):
         results = Result(cls.query_table_db.all_docs,
                          include_docs=True,
                          page_size=package_size)
@@ -273,4 +275,13 @@ class CourseCache:
         for result in results:
             cls.meeting_lookup_table[result['id']] = result['doc']['list']
         logging.info('Downloaded meeting_lookup_table has {} documents'
+                     .format(len(cls.meeting_lookup_table)))
+
+        results = Result(cls.courses_db.all_docs,
+                         include_docs=True,
+                         page_size=package_size)
+        cls.meeting_lookup_table = dict()
+        for result in results:
+            cls.api_object_cache[result['id']] = result['doc']
+        logging.info('Downloaded api objects has {} documents'
                      .format(len(cls.meeting_lookup_table)))

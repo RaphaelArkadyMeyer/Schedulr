@@ -10,4 +10,4 @@ class FlaskConfig(object):
 # Our options
 LOGGING_MODE = logging.DEBUG
 DO_SAMPLE_QUERY = False
-COURSE_CACHE_DOWNLOAD = True
+COURSE_CACHE_DOWNLOAD = False
