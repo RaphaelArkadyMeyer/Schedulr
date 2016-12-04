@@ -11,10 +11,10 @@ from cloudant.result import Result
 
 class CourseCache:
 
-    api_url  = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
-               ':8bf2a56a17024e594f342b7c5870b90bb1e669260baecb81462' \
-               '85732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-' \
-               'bluemix.cloudant.com'
+    api_url = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
+              ':8bf2a56a17024e594f342b7c5870b90bb1e669260baecb81462' \
+              '85732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-' \
+              'bluemix.cloudant.com'
     api_user = '8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix'
     api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb814628' \
                '5732fdf2ae6f'
@@ -117,7 +117,8 @@ class CourseCache:
                      ' Querying online database: {}'
                      .format(course_id))
         with Document(cls.api_class_lookup_db, course_id) as doc:
-            return doc.get('list',[])
+            # TODO REUPLOAD API_CLASS_LOOKUP DATABASE TO CLOUDANT
+            return doc.get('list', [])
 
     @classmethod
     def get_section_ids(cls, api_class_id):
