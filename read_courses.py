@@ -89,10 +89,13 @@ class CourseCache:
         if odata_id in cls.api_object_cache:
             out = cls.api_object_cache[odata_id]
             if out['odata_type'] != odata_type:
-                logging.fatal('Bad reference for odata_type given: {}'
-                              .format(odata_id))
+                logging.fatal('Bad reference for odata_type given: {} for {}'
+                              .format(odata_type, odata_id))
             return cls.api_object_cache[odata_id]
 
+        logging.warn('PurdueIo API GUID not found in local cache.'
+                     ' Querying online database: {} of type {}'
+                     .format(odata_id, odata_type))
         out = cls.odata_from_db(odata_id)
         if out['odata_type'] != odata_type:
             logging.fatal('Bad reference for odata_type given: {}'
@@ -111,15 +114,19 @@ class CourseCache:
 
     @classmethod
     def get_course_ids(cls, dept, number):
-        try:
-            number_dict = cls.query_table_db[dept]
-            if number not in number_dict['dict']:
-                logging.warn("Course not found in {}: {}".format(dept, number))
-                return list()
-            return number_dict['dict'][number]
-        except (KeyError):
-            logging.warn('Department not found: {}'.format(dept))
+        number_dict = dict()
+        if dept in cls.query_table:
+            number_dict = cls.query_table[dept]
+        else:
+            logging.warn('Department not found locally.'
+                         ' Querying online database: {}'.format(dept))
+            with Document(cls.query_table_db, dept) as doc:
+                number_dict = json.loads(doc.json())
+
+        if number not in number_dict:
+            logging.warn("Course not found in {}: {}".format(dept, number))
             return list()
+        return number_dict[number]
 
     @classmethod
     def get_api_class_ids(cls, course_id):
@@ -145,8 +152,8 @@ class CourseCache:
 
     @classmethod
     def get_meeting_ids(cls, section_id):
-        if section_id in cls.section_lookup_table:
-            return cls.section_lookup_table[section_id]
+        if section_id in cls.meeting_lookup_table:
+            return cls.meeting_lookup_table[section_id]
 
         logging.warn('PurdueIo API Section object not found in local table.'
                      ' Querying online database: {}'
