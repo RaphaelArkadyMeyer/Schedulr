@@ -37,16 +37,13 @@ class CourseList (FlaskForm):
     max_courses = 15
     course_keys = []
     submit_button = wtforms.SubmitField(u"Schedüle")
-    gap_preference = wtforms.SelectField(
+    gap_preference = wtforms.IntegerField(
             "Gap between classes",
-            validators = [],
-            coerce = int,
-            choices = list(zip(range(7), map(lambda x: str(x) + " hours", range(7))))
+            validators = [wtforms.validators.NumberRange(min=0, message="Gap must be greater than zero")],
             )
-    time_preference = wtforms.SelectField(
+    time_preference = wtforms.IntegerField(
             "Preferred class time",
-            validators = [],
-            choices = list(zip(hours_of_the_day,hours_of_the_day))
+            validators = [wtforms.validators.NumberRange(min=7, max=19, message='Invalid timeslot')],
             )
 # Modify CourseList dynamically
 # Pretend this is CourseList's constructor
@@ -141,7 +138,11 @@ def make_schedule():
                     number = '{:<05d}'.format( int(number) )
                     yield [name,number]
         return generate_schedule(preprocess_courses())
-    return flask.render_template('select.html', form=form, renderer='bootstrap')
+    return flask.render_template(
+            'select.html',
+            form=form,
+            hours_of_the_day=hours_of_the_day,
+            renderer='bootstrap')
 
 @frontend.route('/scripts/<filename>')
 def get_script(filename):
