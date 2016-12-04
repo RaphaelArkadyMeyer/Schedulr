@@ -268,7 +268,7 @@ class CourseCache:
             logging.info('Downloaded query_table has {} documents'
                          .format(len(cls.query_table)))
 
-        with benchmark("Class Lookup Table Download Time:"):
+        with benchmark("Class Lookup Table Download Time"):
             results = Result(cls.api_class_lookup_db.all_docs,
                              include_docs=True,
                              page_size=package_size)
@@ -279,7 +279,7 @@ class CourseCache:
             logging.info('Downloaded api_class_lookup_table has {} documents'
                          .format(len(cls.api_class_lookup_table)))
 
-        with benchmark("Section Lookup Table Download Time:"):
+        with benchmark("Section Lookup Table Download Time"):
             results = Result(cls.section_lookup_db.all_docs,
                              include_docs=True,
                              page_size=package_size)
@@ -290,7 +290,7 @@ class CourseCache:
             logging.info('Downloaded section_lookup_table has {} documents'
                          .format(len(cls.section_lookup_table)))
 
-        with benchmark("Meeting Lookup Table Download Time:"):
+        with benchmark("Meeting Lookup Table Download Time"):
             results = Result(cls.meeting_lookup_db.all_docs,
                              include_docs=True,
                              page_size=package_size)
@@ -301,7 +301,7 @@ class CourseCache:
             logging.info('Downloaded meeting_lookup_table has {} documents'
                          .format(len(cls.meeting_lookup_table)))
 
-        with benchmark("PurdueIo API Cache Download Time:"):
+        with benchmark("PurdueIo API Cache Download Time"):
             results = Result(cls.courses_db.all_docs,
                              include_docs=True,
                              page_size=package_size)
