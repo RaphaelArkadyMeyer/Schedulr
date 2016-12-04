@@ -8,8 +8,6 @@ import wtforms
 import wtforms.validators
 import flask
 
-import course_maker
-
 from read_courses import CourseCache
 
 import re
@@ -46,7 +44,7 @@ class CourseList (FlaskForm):
             )
     time_preference = wtforms.IntegerField(
             "Preferred class time",
-            validators = [wtforms.validators.NumberRange(min=7, max=19, message='Invalid timeslot')],
+            # validators = [wtforms.validators.NumberRange(min=7, max=19, message='Invalid timeslot')],
             )
 
 
