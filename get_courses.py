@@ -116,4 +116,4 @@ def download_all_data(file_path):
     print("End")
 
 
-download_all_data("CourseInfo.json")
+# download_all_data("CourseInfo.json")

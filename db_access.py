@@ -176,5 +176,5 @@ def write_all_to_db():
     client.disconnect()
 
 
-write_lookup_tables()
+# write_lookup_tables()
 # write_all_to_db()
