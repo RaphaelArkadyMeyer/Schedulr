@@ -37,9 +37,10 @@ class CourseList (FlaskForm):
     max_courses = 15
     course_keys = []
     submit_button = wtforms.SubmitField(u"Schedüle")
-    gap_preference = wtforms.IntegerField(
-            "Gap between classes",
+    gap_preference = wtforms.SelectField(
+            "Gaps between classes",
             validators = [wtforms.validators.NumberRange(min=0, message="Gap must be greater than zero")],
+            choices = [(0,'Bunch it up'),(1,'Hour breaks'),(2,'All at once')]
             )
     time_preference = wtforms.IntegerField(
             "Preferred class time",

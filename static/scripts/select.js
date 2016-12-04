@@ -6,15 +6,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		element.appendChild(document.createTextNode(text));
 	}
 
-
-	var gap_preference_display = document.getElementById('gap_preference_display');
-	var gap_preference         = document.getElementById('gap_preference');
-	var gap_preference_changed = function() {
-		setInnerText(gap_preference_display, gap_preference.value);
-	}
-	gap_preference.addEventListener('input', gap_preference_changed);
-	gap_preference_changed();
-
 	var time_preference_display = document.getElementById('time_preference_display');
 	var time_preference         = document.getElementById('time_preference');
 	var time_preference_changed = function() {
