@@ -45,17 +45,21 @@ class CourseList (FlaskForm):
             "Preferred class time",
             validators = [wtforms.validators.NumberRange(min=7, max=19, message='Invalid timeslot')],
             )
-# Modify CourseList dynamically
-# Pretend this is CourseList's constructor
-for i in range(CourseList.max_courses):
-    course_name = 'Course '+str(i)
-    course_key = 'course'+str(i)
-    sf = wtforms.StringField(course_name,validators=[
-            wtforms.validators.Optional(),
-            wtforms.validators.Regexp(r'[a-zA-Z]+[0-9]+')
-            ])
-    setattr(CourseList, course_key, sf)
-    CourseList.course_keys.append(course_key)
+
+
+def CourseList_static_constructor():
+    # Modify CourseList dynamically
+    # Pretend this is CourseList's constructor
+    for i in range(CourseList.max_courses):
+        course_name = 'Course '+str(i)
+        course_key = 'course'+str(i)
+        sf = wtforms.StringField(course_name,validators=[
+                wtforms.validators.Optional(),
+                wtforms.validators.Regexp(r'[a-zA-Z]+[0-9]+')
+                ])
+        setattr(CourseList, course_key, sf)
+        CourseList.course_keys.append(course_key)
+CourseList_static_constructor()
 
 def navigation_header():
     return flask_nav.elements.Navbar(
