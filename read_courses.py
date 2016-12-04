@@ -4,20 +4,25 @@ import logging
 import json
 import config
 
+
 from cloudant.client import Cloudant
 from cloudant.document import Document
 from cloudant.result import Result
 
+from time_profiler import benchmark
+
 
 class CourseCache:
 
-    api_url  = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
-               ':8bf2a56a17024e594f342b7c5870b90bb1e669260baecb81462' \
-               '85732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-' \
-               'bluemix.cloudant.com'
+    api_url = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
+              ':8bf2a56a17024e594f342b7c5870b90bb1e669260baecb81462' \
+              '85732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-' \
+              'bluemix.cloudant.com'
     api_user = '8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix'
     api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb814628' \
                '5732fdf2ae6f'
+
+    db_client = None
 
     query_table_db = None
     api_class_lookup_db = None
@@ -29,8 +34,8 @@ class CourseCache:
     section_lookup_table = dict()
     meeting_lookup_table = dict()
 
-    db_client = None
     courses_db = None
+    api_object_cache = dict()
 
     setup_lock = threading.Event()
 
@@ -72,8 +77,8 @@ class CourseCache:
         cls.setup_lock.set()
 
         if config.COURSE_CACHE_DOWNLOAD:
-            logging.info('Downloading lookup tables from Cloudant...')
-            cls.get_table_from_db()
+            with benchmark("Getting tables from database"):
+                cls.get_tables_from_db()
 
     @classmethod
     def wait_for_access(cls):
@@ -81,9 +86,20 @@ class CourseCache:
 
     @classmethod
     def get_api_object(cls, odata_id, odata_type):
+        if odata_id in cls.api_object_cache:
+            out = cls.api_object_cache[odata_id]
+            if out['odata_type'] != odata_type:
+                logging.fatal('Bad reference for odata_type given: {} for {}'
+                              .format(odata_type, odata_id))
+            return cls.api_object_cache[odata_id]
+
+        logging.warn('PurdueIo API GUID not found in local cache.'
+                     ' Querying online database: {} of type {}'
+                     .format(odata_id, odata_type))
         out = cls.odata_from_db(odata_id)
         if out['odata_type'] != odata_type:
-            logging.fatal('Bad reference for odata_type created')
+            logging.fatal('Bad reference for odata_type given: {}'
+                          .format(odata_id))
         return out
 
     @classmethod
@@ -98,15 +114,19 @@ class CourseCache:
 
     @classmethod
     def get_course_ids(cls, dept, number):
-        try:
-            number_dict = cls.query_table_db[dept]
-            if number not in number_dict['dict']:
-                logging.warn("Course not found in {}: {}".format(dept, number))
-                return list()
-            return number_dict['dict'][number]
-        except (KeyError):
-            logging.warn('Department not found: {}'.format(dept))
+        number_dict = dict()
+        if dept in cls.query_table:
+            number_dict = cls.query_table[dept]
+        else:
+            logging.warn('Department not found locally.'
+                         ' Querying online database: {}'.format(dept))
+            with Document(cls.query_table_db, dept) as doc:
+                number_dict = json.loads(doc.json())
+
+        if number not in number_dict:
+            logging.warn("Course not found in {}: {}".format(dept, number))
             return list()
+        return number_dict[number]
 
     @classmethod
     def get_api_class_ids(cls, course_id):
@@ -117,7 +137,7 @@ class CourseCache:
                      ' Querying online database: {}'
                      .format(course_id))
         with Document(cls.api_class_lookup_db, course_id) as doc:
-            return doc.get('list',[])
+            return doc.get('list', list())
 
     @classmethod
     def get_section_ids(cls, api_class_id):
@@ -132,8 +152,8 @@ class CourseCache:
 
     @classmethod
     def get_meeting_ids(cls, section_id):
-        if section_id in cls.section_lookup_table:
-            return cls.section_lookup_table[section_id]
+        if section_id in cls.meeting_lookup_table:
+            return cls.meeting_lookup_table[section_id]
 
         logging.warn('PurdueIo API Section object not found in local table.'
                      ' Querying online database: {}'
@@ -237,39 +257,56 @@ class CourseCache:
         return output
 
     @classmethod
-    def get_table_from_db(cls, package_size=5000):
-        results = Result(cls.query_table_db.all_docs,
-                         include_docs=True,
-                         page_size=package_size)
-        cls.query_table = dict()
-        for result in results:
-            cls.query_table[result['id']] = result['doc']['dict']
-        logging.info('Downloaded query_table has {} documents'
-                     .format(len(cls.query_table)))
+    def get_tables_from_db(cls, package_size=5000):
+        with benchmark("Query Table Download Time"):
+            results = Result(cls.query_table_db.all_docs,
+                             include_docs=True,
+                             page_size=package_size)
+            cls.query_table = dict()
+            for result in results:
+                cls.query_table[result['id']] = result['doc']['dict']
+            logging.info('Downloaded query_table has {} documents'
+                         .format(len(cls.query_table)))
 
-        results = Result(cls.api_class_lookup_db.all_docs,
-                         include_docs=True,
-                         page_size=package_size)
-        cls.api_class_lookup_table = dict()
-        for result in results:
-            cls.api_class_lookup_table[result['id']] = result['doc']['list']
-        logging.info('Downloaded api_class_lookup_table has {} documents'
-                     .format(len(cls.api_class_lookup_table)))
+        with benchmark("Class Lookup Table Download Time:"):
+            results = Result(cls.api_class_lookup_db.all_docs,
+                             include_docs=True,
+                             page_size=package_size)
+            cls.api_class_lookup_table = dict()
+            for result in results:
+                lookup_list = result['doc'].get('list', list())
+                cls.api_class_lookup_table[result['id']] = lookup_list
+            logging.info('Downloaded api_class_lookup_table has {} documents'
+                         .format(len(cls.api_class_lookup_table)))
 
-        results = Result(cls.section_lookup_db.all_docs,
-                         include_docs=True,
-                         page_size=package_size)
-        cls.section_lookup_table = dict()
-        for result in results:
-            cls.section_lookup_table[result['id']] = result['doc']['list']
-        logging.info('Downloaded section_lookup_table has {} documents'
-                     .format(len(cls.section_lookup_table)))
+        with benchmark("Section Lookup Table Download Time:"):
+            results = Result(cls.section_lookup_db.all_docs,
+                             include_docs=True,
+                             page_size=package_size)
+            cls.section_lookup_table = dict()
+            for result in results:
+                lookup_list = result['doc']['list']
+                cls.section_lookup_table[result['id']] = lookup_list
+            logging.info('Downloaded section_lookup_table has {} documents'
+                         .format(len(cls.section_lookup_table)))
 
-        results = Result(cls.meeting_lookup_db.all_docs,
-                         include_docs=True,
-                         page_size=package_size)
-        cls.meeting_lookup_table = dict()
-        for result in results:
-            cls.meeting_lookup_table[result['id']] = result['doc']['list']
-        logging.info('Downloaded meeting_lookup_table has {} documents'
-                     .format(len(cls.meeting_lookup_table)))
+        with benchmark("Meeting Lookup Table Download Time:"):
+            results = Result(cls.meeting_lookup_db.all_docs,
+                             include_docs=True,
+                             page_size=package_size)
+            cls.meeting_lookup_table = dict()
+            for result in results:
+                lookup_list = result['doc']['list']
+                cls.meeting_lookup_table[result['id']] = lookup_list
+            logging.info('Downloaded meeting_lookup_table has {} documents'
+                         .format(len(cls.meeting_lookup_table)))
+
+        with benchmark("PurdueIo API Cache Download Time:"):
+            results = Result(cls.courses_db.all_docs,
+                             include_docs=True,
+                             page_size=package_size)
+            cls.meeting_lookup_table = dict()
+            for result in results:
+                cls.api_object_cache[result['id']] = result['doc']
+            logging.info('Downloaded api objects has {} documents'
+                         .format(len(cls.meeting_lookup_table)))

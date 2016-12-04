@@ -114,3 +114,6 @@ def download_all_data(file_path):
     write_caches(caches, file_path)
 
     print("End")
+
+
+# download_all_data("CourseInfo.json")
