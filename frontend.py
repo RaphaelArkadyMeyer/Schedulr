@@ -117,7 +117,7 @@ def generate_schedule(gen):
         start_time   =  meeting.start_time
         days_of_week =  meeting.days
         duration     =  meeting.duration
-        description  =  meeting.meeting_type
+        description  =  meeting.course_title + ' ' + meeting.meeting_type
         color        =  css_defs['color']['courses'][i % len(css_defs['color']['courses'])]
         top          =  str(start_time - 7*60) + 'px'
         height       =  str(duration-5) + 'px'

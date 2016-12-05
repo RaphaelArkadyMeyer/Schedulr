@@ -41,12 +41,11 @@ def get_all_schedules(list_dept_num):
                     meeting_list = section_meetings.get(section_type, [])
                     meeting_list += meetings
                     section_meetings[section_type] = meeting_list
-        meetings = map(
-                schedule_models.meeting_from_json,
+        meetingss += map(
+                lambda ms: map(
+                    lambda m: schedule_models.meeting_from_json(m, dept + num),
+                    ms),
                 section_meetings.values())
-        for meeting in meetings:
-            meeting.course_title = dept + num
-        meetingss += section_meetings.values()
     logging.debug('All possible meeting times')
     logging.debug(meetingss)
     return _get_schedule_helper(meetingss)
