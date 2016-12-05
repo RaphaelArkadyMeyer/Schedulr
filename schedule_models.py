@@ -22,7 +22,6 @@ day_dict = {
     }
 
 def meeting_from_json(obj, course_title):
-    logging.info('Created new meeting for ' + course_title)
     days         = obj['DaysOfWeek'].split(', ')
     start_time   = obj['StartTime']
     duration     = obj['Duration']

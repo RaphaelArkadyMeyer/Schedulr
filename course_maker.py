@@ -6,15 +6,16 @@ import json
 import logging
 
 from read_courses import CourseCache
+import random
 import schedule_models
 
 
 def meetings_overlap(meeting1, meeting2):
     if not set(meeting1.days).intersection(meeting2.days):
         return False  # The meetings don't occur on the same day
-    if meeting1.start_time < meeting2.start_time + meeting2.duration:
+    if meeting1.start_time > meeting2.start_time + meeting2.duration:
         return False  # meeting1 is after meeting2
-    if meeting1.start_time + meeting1.duration > meeting2.start_time:
+    if meeting1.start_time + meeting1.duration < meeting2.start_time:
         return False  # meeting1 is before meeting2
     return True
 
@@ -59,12 +60,11 @@ def _get_schedule_helper(meetingss, meetings_in_schedule=[]):
         yield meetings_in_schedule
         return  # Can't add any more because we're done :-)
     head, *tail = meetingss
+    random.shuffle(head)
     for meeting in head:
         if not any(meetings_overlap(meeting, other) for other in meetings_in_schedule):
             for schedule in _get_schedule_helper(tail, [meeting] + meetings_in_schedule):
                 yield schedule
-        else:
-            logging.info('Schedule conflict')
 
 
 
