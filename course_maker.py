@@ -38,6 +38,7 @@ def best_schedule(list_dept_num, best_time=12 * 60, preset=0):
         rating = evaluate_schedule(schedule, best_time, preset)
         if rating < best:
             bestSchedule = schedule
+            best = rating
     logging.info("Best schedule is")
     logging.info(bestSchedule)
     logging.info(best)
