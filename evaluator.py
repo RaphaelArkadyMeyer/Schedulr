@@ -32,12 +32,12 @@ def gap_cost_poly(x):
 def gap_cost(meeting_list, preset):
     sum = 0
     for i in range(0, len(meeting_list) - 1):
-        print("PING {}".format(i))
+        # print("PING {}".format(i))
         first_meet = meeting_list[i]
         second_meet = meeting_list[i + 1]
         first_meet_end = first_meet.start_time + first_meet.duration
         gap_time = second_meet.start_time - first_meet_end
-        logging.warn("GAP {}".format(gap_time))
+        # logging.warn("GAP {}".format(gap_time))
         if gap_time > 10 and gap_time < 4 * 60:
             sum += gap_cost_poly(gap_time) ** 2
     return sum ** 0.5
@@ -50,23 +50,23 @@ def evaluate_schedule(meeting_list, best_time=12 * 60, preset='TODO'):
     score = 0
 
     for name, day in Day.__members__.items():
-        meets_par_day = list(filter(lambda meet: day in meet.days, sort_by_start))
+        meets_per_day = list(filter(lambda meet: day in meet.days, sort_by_start))
         day_score = 0
-        day_score += time_cost(meets_par_day, best_time)
-        day_score += gap_cost(meets_par_day, preset)
+        day_score += time_cost(meets_per_day, best_time)
+        day_score += gap_cost(meets_per_day, preset)
         logging.fatal('{} scores {} with meetings of classes {}.'
                       'best_time -> {}, '
                       'gap_cost -> {}'
                       .format(name,
                               day_score,
                               list(map(lambda meet: meet.course_title,
-                                       meets_par_day)),
-                              time_cost(meets_par_day, best_time),
-                              gap_cost(meets_par_day, preset)))
+                                       meets_per_day)),
+                              time_cost(meets_per_day, best_time),
+                              gap_cost(meets_per_day, preset)))
         score += day_score
 
     return score
 
 
-for x in [0, 5, 10, 15, 30, 60, 110, 120, 210]:
-    print('{} -> {}'.format(x, gap_cost_poly(x) ** 2))
+# for x in [0, 5, 10, 15, 30, 60, 110, 120, 210]:
+#     print('{} -> {}'.format(x, gap_cost_poly(x) ** 2))
