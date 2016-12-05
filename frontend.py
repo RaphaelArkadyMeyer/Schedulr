@@ -13,9 +13,6 @@ from read_courses import CourseCache
 import re
 import logging
 
-from django import template
-register = template.Library()
-
 frontend = Blueprint('frontend', __name__)
 
 css_defs = {
@@ -29,36 +26,53 @@ css_defs = {
             },
         }
 
+days_of_the_week_offset = [
+        ('Monday',    '16.666%'),
+        ('Tuesday',   '33.333%'),
+        ('Wednesday', '50%'),
+        ('Thursday',  '66.666%'),
+        ('Friday',    '83.333%')]
+hours_of_the_day = [str(t)+":00AM" for t in range(7,12+1)] + [str(t)+":00PM" for t in range(1,7+1)]
 
 class CourseList (FlaskForm):
     max_courses = 15
     course_keys = []
     submit_button = wtforms.SubmitField(u"Schedüle")
-
-
-def navigation_header():
-    return flask_nav.elements.Navbar(
-            flask_nav.elements.View(u"Schedülr", 'frontend.make_schedule'),
-            flask_nav.elements.View(u"Schedüle", 'frontend.make_schedule'),
+    gap_preference = wtforms.SelectField(
+            "Gaps between classes",
+            coerce = int,
+            choices = [(0,'Bunch it up'),(1,'Hour breaks'),(2,'All at once')]
+            )
+    time_preference = wtforms.IntegerField(
+            "Preferred class time",
+            # validators = [wtforms.validators.NumberRange(min=7, max=19, message='Invalid timeslot')],
             )
 
 
-# Modify CourseList dynamically
-# Pretend this is CourseList's constructor
-for i in range(CourseList.max_courses):
-    course_name = 'Course '+str(i)
-    course_key = 'course'+str(i)
-    sf = wtforms.StringField(course_name,validators=[
-            wtforms.validators.Optional(),
-            wtforms.validators.Regexp(r'[a-zA-Z]+[0-9]+')
-            ])
-    setattr(CourseList, course_key, sf)
-    CourseList.course_keys.append(course_key)
+def CourseList_static_constructor():
+    # Modify CourseList dynamically
+    # Pretend this is CourseList's constructor
+    for i in range(CourseList.max_courses):
+        course_name = 'Course '+str(i)
+        course_key = 'course'+str(i)
+        sf = wtforms.StringField(course_name,validators=[
+                wtforms.validators.Optional(),
+                wtforms.validators.Regexp(r'[a-zA-Z]+[0-9]+')
+                ])
+        setattr(CourseList, course_key, sf)
+        CourseList.course_keys.append(course_key)
+CourseList_static_constructor()
+
+def navigation_header():
+    return flask_nav.elements.Navbar(
+            flask_nav.elements.View(u"Schedülr", 'frontend.get_index'),
+            flask_nav.elements.View(u"Schedüle", 'frontend.make_schedule'),
+            )
 
 @frontend.route('/')
 def get_index():
     logging.debug ("Sending home page")
-    return flask.render_template("base.html", mimetype="text/html")
+    return flask.redirect("select", code=302)
 
 @frontend.route('/stylesheets/style.css')
 def get_main_stylesheet():
@@ -74,13 +88,6 @@ def safe_cast(from_object, to_type, default=None):
     except (ValueError, TypeError):
         return default
 
-days_of_the_week_offset = [
-        ('Monday',    '16.666%'),
-        ('Tuesday',   '33.333%'),
-        ('Wednesday', '50%'),
-        ('Thursday',  '66.666%'),
-        ('Friday',    '83.333%')]
-hours_of_the_day = [str(t)+":00AM" for t in range(7,12+1)] + [str(t)+":00PM" for t in range(1,7+1)]
 
 def day_of_week_to_offset(day):
     x =  {
@@ -99,7 +106,7 @@ Generates a schedule page
 def generate_schedule(gen):
     def schedule_styler():
         i = -1
-        for [dept,num] in gen:
+        for (dept,num) in gen:
             meetings = CourseCache.query_meeting_times(dept,num)
             for meeting in meetings:
                 i            += 1
@@ -137,9 +144,17 @@ def make_schedule():
                     [name,number] = re.findall(r'[a-zA-Z]+|[0-9]+', course)
                     name = name.upper()
                     number = '{:<05d}'.format( int(number) )
-                    yield [name,number]
+                    yield (name,number)
         return generate_schedule(preprocess_courses())
-    return flask.render_template('select.html', form=form, renderer='bootstrap')
+    return flask.render_template(
+            'select.html',
+            form=form,
+            hours_of_the_day=hours_of_the_day,
+            renderer='bootstrap')
+
+@frontend.route('/scripts/<filename>')
+def get_script(filename):
+    return flask.send_from_directory('static/scripts', filename)
 
 @frontend.route('/images/<filename>')
 def get_image(filename):

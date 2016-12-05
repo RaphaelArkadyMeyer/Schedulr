@@ -5,7 +5,6 @@ from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_appconfig import AppConfig
 from flask_nav import Nav
-import flask_nav.elements
 
 import os
 import threading
@@ -14,6 +13,8 @@ from frontend import frontend
 from frontend import navigation_header
 
 from read_courses import CourseCache
+
+import config as config
 
 
 def query_test(dept, number):
@@ -25,17 +26,18 @@ def query_test(dept, number):
         logging.debug(meeting)
 
 
-
 def flask_startup():
     app = Flask(__name__)
     nav = Nav(app)
 
     @nav.navigation()
-    def navigate(): return navigation_header()
+    def navigate():
+        return navigation_header()
+
     nav.navigation(navigate())
 
-    app.secret_key = 'super secret key'
-    app.config.from_object('config')
+    app.secret_key = 'super duper secret key'
+    app.config.from_object('config.FlaskConfig')
 
     Bootstrap(app)
 
@@ -53,10 +55,12 @@ def flask_startup():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=config.LOGGING_MODE)
 
-    query_thread = threading.Thread(target=query_test, args=('CS', '35200'))
-    query_thread.start()
+    if config.DO_SAMPLE_QUERY:
+        query_thread = threading.Thread(target=query_test,
+                                        args=('CS', '35200'))
+        query_thread.start()
 
     cache_setup_thread = threading.Thread(target=CourseCache.setup)
     cache_setup_thread.start()
