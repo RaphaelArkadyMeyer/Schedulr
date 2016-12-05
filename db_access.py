@@ -11,14 +11,15 @@ api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb814628' \
            '5732fdf2ae6f'
 
 
-def bulk_upload(cache, database, messageSize=2000):
+def bulk_upload(cache, database, messageSize=1500):
     i = 1
     conflicts = 0
     size = len(cache.items())
     load = list()
+    print("Done\tAmount\tConflicts")
     for item_id, item_json in cache.items():
         if i % messageSize == 0:
-            print("{:.1f}%\t{}".format(100 * i / size, i))
+            print("{:.1f}%\t{}\t{}".format(100 * i / size, i, conflicts))
             rts = database.bulk_docs(load)
             for rt in rts:
                 if 'error' in rt.keys():
@@ -47,7 +48,7 @@ def bulk_upload(cache, database, messageSize=2000):
         print("{} conflicts occured".format(conflicts))
 
 
-def queryFromDB(odata_id):
+def query_from_db(odata_id):
     client = Cloudant(api_user, api_pass, url=api_url)
     print("Quering all meeting times")
 
@@ -160,7 +161,7 @@ def write_all_to_db():
     print('Username: {0}'.format(session['userCtx']['name']))
     print('Databases: {0}'.format(client.all_dbs()))
 
-    courses_db = client['testing_db']
+    courses_db = client['purdue_courses']
 
     file_path = "CourseInfo.json"
     f = open(file_path, 'r')
@@ -168,9 +169,7 @@ def write_all_to_db():
     f.close()
     caches = json.loads(text)
 
-    for cache_type, cache in caches.items():
-        print("Uploading {}...".format(cache_type))
-        bulk_upload(cache, courses_db)
+    bulk_upload(caches, courses_db)
 
     # Disconnect from the server
     client.disconnect()
