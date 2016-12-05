@@ -20,7 +20,7 @@ day_dict = {
         'Friday':    Day.Friday
     }
 
-def meeting_from_json(obj):
+def meeting_from_json(obj, title):
     days         = obj['DaysOfWeek'].split(', ')
     start_time   = obj['StartTime']
     duration     = obj['Duration']
@@ -29,9 +29,12 @@ def meeting_from_json(obj):
     days       = [day_dict.get(day, Day.Other) for day in days]
     start_time = datetime.strptime(start_time[:19], '%Y-%m-%dT%H:%M:%S')
     start_time = start_time.hour*60 + start_time.minute
-    duration   = parse_iso8601_duration(duration) / 60
+    if duration == 'PT0S':
+        duration = [50, 50, 65, 110, 110, 110][len(days)]
+    else:
+        duration = parse_iso8601_duration(duration) / 60
 
-    return Meeting(days, start_time, duration, meeting_type)
+    return Meeting(days, start_time, duration, meeting_type, title)
 
 
 def parse_iso8601_duration(duration_str):
@@ -50,11 +53,12 @@ def parse_iso8601_duration(duration_str):
 
 
 class Meeting:
-    def __init__(self, days=[], start_time=7*60+30, duration=50, meeting_type=None):
+    def __init__(self, days=[], start_time=7*60+30, duration=50, meeting_type=None, course_title=''):
         self.days         = list(days)
         self.start_time   = int(start_time)
         self.duration     = int(duration)
         self.meeting_type = str(meeting_type)
+        self.course_title = str(course_title)
 
 
 class Section:

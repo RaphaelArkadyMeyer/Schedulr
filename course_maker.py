@@ -28,7 +28,7 @@ def max_guess(list_dept_num):
 
 def get_all_schedules(list_dept_num):
     s = schedule_models.Schedule()
-    list_of_list_of_meetings = []
+    meetingss = []
     for (dept,num) in list_dept_num:
         query = CourseCache.query(dept,num)
         section_meetings = {}
@@ -41,24 +41,22 @@ def get_all_schedules(list_dept_num):
                     meeting_list = section_meetings.get(section_type, [])
                     meeting_list += meetings
                     section_meetings[section_type] = meeting_list
-        list_of_list_of_meetings += section_meetings.values()
-    logging.info('All possible meeting times')
-    logging.info(list_of_list_of_meetings)
-    meeting_objects = []
-    for list_of_list_of_meetings in list_of_list_of_meetings:
-        meeting_objects.append(
-                [ schedule_models.meeting_from_json(meeting)
-                    for meeting in list_of_list_of_meetings ]
-                )
-    logging.info(meeting_objects)
-    return _get_schedule_helper(meeting_objects)
+        meetings = map(
+                schedule_models.meeting_from_json,
+                section_meetings.values())
+        for meeting in meetings:
+            meeting.course_title = dept + num
+        meetingss += section_meetings.values()
+    logging.debug('All possible meeting times')
+    logging.debug(meetingss)
+    return _get_schedule_helper(meetingss)
 
 
-def _get_schedule_helper(list_of_list_of_meetings, meetings_in_schedule=[]):
-    if not list_of_list_of_meetings:
+def _get_schedule_helper(meetingss, meetings_in_schedule=[]):
+    if not meetingss:
         yield meetings_in_schedule
         return  # Can't add any more because we're done :-)
-    head, *tail = list_of_list_of_meetings
+    head, *tail = meetingss
     for meeting in head:
         if not any(meetings_overlap(meeting, other) for other in meetings_in_schedule):
             for schedule in _get_schedule_helper(tail, [meeting] + meetings_in_schedule):
