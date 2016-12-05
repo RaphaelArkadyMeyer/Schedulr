@@ -1,6 +1,7 @@
 
 from datetime import datetime
 from enum import Enum
+import re
 
 class Day(Enum):
     Monday    = 1
@@ -27,14 +28,16 @@ def meeting_from_json(obj):
 
     days       = [day_dict.get(day, Day.Other) for day in days]
     start_time = datetime.strptime(start_time[:-6], '%Y-%m-%dT%H:%M:%S')
+    start_time = start_time.hour*60 + start_time.minute
     duration   = parse_iso8601_duration(duration)
 
     return Meeting(days, start_time, duration, meeting_type)
 
 
 def parse_iso8601_duration(duration_str):
+    # https://stackoverflow.com/questions/25296416/how-can-i-parse-and-compare-iso-8601-durations-in-python#35936407
     match = re.match(
-        r'P(?P<years>\d+)Y)?(?P<months>\d+)M)?(?P<weeks>\d+)W)?(?P<days>\d+)D)?T((?P<hours>\d+)H)?((?P<minutes>\d+)M)?((?P<seconds>\d+)S)?',
+        r'P((?P<years>\d+)Y)?((?P<months>\d+)M)?((?P<weeks>\d+)W)?((?P<days>\d+)D)?T((?P<hours>\d+)H)?((?P<minutes>\d+)M)?((?P<seconds>\d+)S)?',
         duration_str
     ).groupdict()
     return int(match['years'] or 0)*365*24*3600 + \
@@ -50,7 +53,7 @@ class Meeting:
     def __init__(self, days=[], start_time=7*60+30, duration=50, meeting_type=None):
         self.days         = list(days)
         self.start_time   = int(start_time)
-        self.end_time     = int(end_time)
+        self.duration     = int(duration)
         self.meeting_type = str(meeting_type)
 
 

@@ -106,10 +106,11 @@ Generates a schedule page
 @gen an iterable of course pairs (i.e. ("CS","252") or ("CS","25200"))
 """
 def generate_schedule(gen):
+    foo = course_maker.max_guess(gen)
+    logging.fatal("Displaying generated schedule:")
+    logging.fatal(foo)
     def schedule_styler():
         i = -1
-        foo = course_maker.max_guess(gen)
-        logging.debug(foo)
         for (dept,num) in gen:
             meetings = CourseCache.query_meeting_times(dept,num)
             for meeting in meetings:
