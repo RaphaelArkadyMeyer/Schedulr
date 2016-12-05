@@ -27,6 +27,13 @@
 		{% block navbar %}
 		{{ nav.navigate.render() }}
 		{%- endblock navbar %}
+
+		{% for alert in alerts %}
+			<div class="alert {{ alert.type }}">
+				{{ alert.message }}
+			</div>
+		{% endfor %}
+
 		<div class="content">
 			{% block content -%}
 			{%- endblock content %}

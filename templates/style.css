@@ -10,6 +10,12 @@ body, html {
 	background-color: {{ color.background }};
 }
 
+.alert {
+	width: 75%;
+	position: relative;
+	left: 12.5%;
+}
+
 a {
 	text-decoration: none;
 	color: {{ color.link }};

@@ -37,6 +37,11 @@ days_of_the_week_offset = [
         ('Friday',    '83.333%')]
 hours_of_the_day = [str(t)+":00AM" for t in range(7,12+1)] + [str(t)+":00PM" for t in range(1,7+1)]
 
+class Alert:
+    def __init__(self, message, type='danger'):
+        self.type = 'alert-' + type
+        self.message = message
+
 class CourseList (FlaskForm):
     max_courses = 15
     course_keys = []
@@ -108,11 +113,14 @@ Generates a schedule page
 """
 def generate_schedule(gen):
     schedule = course_maker.max_guess(gen)
+    alerts = []
+    if schedule is None:
+        alerts.append(Alert("Could not generate schedule"))
     logging.info("Displaying generated schedule:")
     logging.info(schedule)
     i = 0
     boxes = []
-    for meeting in schedule:
+    for meeting in schedule or []:
         i            += 1
         start_time   =  meeting.start_time
         days_of_week =  meeting.days
@@ -134,7 +142,8 @@ def generate_schedule(gen):
             'schedule.html',
             fields=boxes,
             days_of_the_week_offset=days_of_the_week_offset,
-            hours_of_the_day=hours_of_the_day)
+            hours_of_the_day=hours_of_the_day,
+            alerts=alerts)
 
 
 @frontend.route('/select', methods=['GET','POST'])
@@ -142,20 +151,28 @@ def make_schedule():
     logging.debug ("Sending schedule selection")
     form = CourseList()
     if form.validate_on_submit():
-        def preprocess_courses():
-            for key in form.course_keys:
-                course = form[key].data
-                if course:
-                    [name,number] = re.findall(r'[a-zA-Z]+|[0-9]+', course)
-                    name = name.upper()
-                    number = '{:<05d}'.format( int(number) )
-                    yield (name,number)
-        return generate_schedule(preprocess_courses())
-    return flask.render_template(
-            'select.html',
-            form=form,
-            hours_of_the_day=hours_of_the_day,
-            renderer='bootstrap')
+        courses = []
+        for key in form.course_keys:
+            course = form[key].data
+            for key2 in form.course_keys:
+                if course and key != key2 and course == form[key2].data:
+                    return flask.render_template(
+                        'select.html',
+                        form = form,
+                        alerts = [Alert("You entered {} twice".format(course))])
+            if course:
+                [name,number] = re.findall(r'[a-zA-Z]+|[0-9]+', course)
+                name = name.upper()
+                number = '{:<05d}'.format( int(number) )
+                courses.append((name,number))
+            logging.debug("added "+name + number)
+        return generate_schedule(courses)
+    else:
+        return flask.render_template(
+                'select.html',
+                form=form,
+                hours_of_the_day=hours_of_the_day,
+                renderer='bootstrap')
 
 @frontend.route('/scripts/<filename>')
 def get_script(filename):
