@@ -12,16 +12,15 @@ def meetings_overlap(meeting1, meeting2):
     if not set(meeting1.days).intersection(meeting2.days):
         return False  # The meetings don't occur on the same day
     if meeting1.start_time < meeting2.start_time + meeting2.duration:
-        return True   # meeting1 is after meeting2
+        return False  # meeting1 is after meeting2
     if meeting1.start_time + meeting1.duration > meeting2.start_time:
-        return True   # meeting1 is before meeting2
-    return False
+        return False  # meeting1 is before meeting2
+    return True
 
 
 def max_guess(list_dept_num):
     result = get_all_schedules(list_dept_num)
-    if not result:
-        return []
+    result = next(result, [])
     logging.debug("Found schedule");
     logging.debug(result);
     return result
@@ -43,12 +42,15 @@ def get_all_schedules(list_dept_num):
                     meeting_list += meetings
                     section_meetings[section_type] = meeting_list
         list_of_list_of_meetings += section_meetings.values()
+    logging.info('All possible meeting times')
+    logging.info(list_of_list_of_meetings)
     meeting_objects = []
     for list_of_list_of_meetings in list_of_list_of_meetings:
         meeting_objects.append(
                 [ schedule_models.meeting_from_json(meeting)
                     for meeting in list_of_list_of_meetings ]
                 )
+    logging.info(meeting_objects)
     return _get_schedule_helper(meeting_objects)
 
 
@@ -61,6 +63,8 @@ def _get_schedule_helper(list_of_list_of_meetings, meetings_in_schedule=[]):
         if not any(meetings_overlap(meeting, other) for other in meetings_in_schedule):
             for schedule in _get_schedule_helper(tail, [meeting] + meetings_in_schedule):
                 yield schedule
+        else:
+            logging.info('Schedule conflict')
 
 
 

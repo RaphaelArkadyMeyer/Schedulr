@@ -27,9 +27,9 @@ def meeting_from_json(obj):
     meeting_type = obj['Type']
 
     days       = [day_dict.get(day, Day.Other) for day in days]
-    start_time = datetime.strptime(start_time[:-6], '%Y-%m-%dT%H:%M:%S')
+    start_time = datetime.strptime(start_time[:19], '%Y-%m-%dT%H:%M:%S')
     start_time = start_time.hour*60 + start_time.minute
-    duration   = parse_iso8601_duration(duration)
+    duration   = parse_iso8601_duration(duration) / 60
 
     return Meeting(days, start_time, duration, meeting_type)
 
