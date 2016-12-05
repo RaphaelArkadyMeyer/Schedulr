@@ -6,6 +6,7 @@ import config
 
 
 from cloudant.client import Cloudant
+from cloudant.adapters import Replay429Adapter
 from cloudant.document import Document
 from cloudant.result import Result
 
@@ -46,7 +47,9 @@ class CourseCache:
                           " while already connected.")
             raise TypeError("Tried to start a new DB connection"
                             " while already connected.")
-        cls.db_client = Cloudant(cls.api_user, cls.api_pass, url=cls.api_url)
+        adapter = Replay429Adapter(200, 0.25)
+        cls.db_client = Cloudant(cls.api_user, cls.api_pass,
+                                 url=cls.api_url, adapter=adapter)
         cls.db_client.connect()
         cls.courses_db = cls.db_client['purdue_courses']
         cls.courses_db.all_docs
@@ -191,10 +194,7 @@ class CourseCache:
         for meeting_id in meeting_id_list:
             meeting = cls.query_meeting_id(meeting_id)
             output_list.append(meeting)
-        output = dict()
-        output['Section'] = section
-        output['Meetings'] = output_list
-        return output
+        return {'Section': section, 'Meetings': output_list}
 
     @classmethod  # Gets the dict of section -> list(meetings) for an api_class
     def query_api_class_id(cls, api_class_id):
@@ -310,3 +310,4 @@ class CourseCache:
                 cls.api_object_cache[result['id']] = result['doc']
             logging.info('Downloaded api objects has {} documents'
                          .format(len(cls.meeting_lookup_table)))
+
