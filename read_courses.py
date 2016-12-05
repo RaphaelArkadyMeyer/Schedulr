@@ -100,6 +100,7 @@ class CourseCache:
                      ' Querying online database: {} of type {}'
                      .format(odata_id, odata_type))
         out = cls.odata_from_db(odata_id)
+        cls.api_object_cache[odata_id] = out
         if out['odata_type'] != odata_type:
             logging.fatal('Bad reference for odata_type given: {}'
                           .format(odata_id))
@@ -125,6 +126,7 @@ class CourseCache:
                          ' Querying online database: {}'.format(dept))
             with Document(cls.query_table_db, dept) as doc:
                 number_dict = json.loads(doc.json())
+                cls.query_table[dept] = number_dict
 
         if number not in number_dict:
             logging.warn("Course not found in {}: {}".format(dept, number))
@@ -140,7 +142,10 @@ class CourseCache:
                      ' Querying online database: {}'
                      .format(course_id))
         with Document(cls.api_class_lookup_db, course_id) as doc:
-            return doc.get('list', list())
+            out = doc.get('list', list())
+            if len(out) > 0:
+                cls.api_class_lookup_table[course_id] = out
+            return out
 
     @classmethod
     def get_section_ids(cls, api_class_id):
@@ -151,6 +156,7 @@ class CourseCache:
                      ' Querying online database: {}'
                      .format(api_class_id))
         with Document(cls.section_lookup_db, api_class_id) as doc:
+            cls.section_lookup_table[api_class_id] = doc['list']
             return doc['list']
 
     @classmethod
@@ -162,6 +168,7 @@ class CourseCache:
                      ' Querying online database: {}'
                      .format(section_id))
         with Document(cls.meeting_lookup_db, section_id) as doc:
+            cls.meeting_lookup_table[section_id] = doc['list']
             return doc['list']
 
     @classmethod

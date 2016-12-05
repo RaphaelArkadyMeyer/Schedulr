@@ -21,7 +21,7 @@ def request_cache(payload, odata_type, odata_type_name, key):
     print('We found {} entries matching the query'.format(len(resp_list)))
     cache = dict()
     for item in resp_list:  # Build map by given key
-        cache[item[key]] = item  # list(item.values())
+        cache[item[key]] = item  # list(item.values())  #
         item['_id'] = item[key]
         item['odata_type'] = odata_type_name
     return cache
@@ -97,16 +97,16 @@ def download_all_data(file_path):
     describe_cache(room_cache, 'Rooms')
 
     caches = dict()
-    caches.update(term_cache)
-    caches.update(subject_cache)
-    caches.update(course_cache)
-    caches.update(class_cache)
-    caches.update(section_cache)
-    caches.update(meeting_cache)
-    caches.update(instructors_cache)
-    caches.update(campus_cache)
-    caches.update(building_cache)
-    caches.update(room_cache)
+    caches['Terms'] = term_cache
+    caches['Subjects'] = subject_cache
+    caches['Courses'] = course_cache
+    caches['Classes'] = class_cache
+    caches['Sections'] = section_cache
+    caches['Meetings'] = meeting_cache
+    caches['Instructors'] = instructors_cache
+    caches['Campuses'] = campus_cache
+    caches['Buildings'] = building_cache
+    caches['Rooms'] = room_cache
 
     sum = 0
     for key in caches:
