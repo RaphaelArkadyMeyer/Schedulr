@@ -1,20 +1,30 @@
+from cloudant.adapters import Replay429Adapter
 from cloudant.client import Cloudant
+from cloudant.result import Result
 import json
+import logging
+from time_profiler import benchmark
+
 
 # HIDDEN FROM GITHUB. GET YOUR OWN KEY FROM BLUEMIX
-api_url  = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix:8bf2a56a17024e594f342b7c5870b90bb1e669260baecb8146285732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix.cloudant.com'
+api_url = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
+          ':8bf2a56a17024e594f342b7c5870b90bb1e669260baecb81462' \
+          '85732fdf2ae6f@8f130e0a-0c4f-41f3-abdd-716a84018df8-' \
+          'bluemix.cloudant.com'
 api_user = '8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix'
-api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb8146285732fdf2ae6f'
+api_pass = '8bf2a56a17024e594f342b7c5870b90bb1e669260baecb814628' \
+           '5732fdf2ae6f'
 
 
-def bulk_upload(cache, database, messageSize=2000):
+def bulk_upload(cache, database, messageSize=1500):
     i = 1
     conflicts = 0
     size = len(cache.items())
     load = list()
+    print("Done\tAmount\tConflicts")
     for item_id, item_json in cache.items():
         if i % messageSize == 0:
-            print("{:.1f}%\t{}".format(100 * i / size, i))
+            print("{:.1f}%\t{}\t{}".format(100 * i / size, i, conflicts))
             rts = database.bulk_docs(load)
             for rt in rts:
                 if 'error' in rt.keys():
@@ -43,7 +53,60 @@ def bulk_upload(cache, database, messageSize=2000):
         print("{} conflicts occured".format(conflicts))
 
 
-def queryFromDB(odata_id):
+def bulk_update(cache, database, messageSize=1500):
+    rev_dict = dict()
+    results = Result(database.all_docs, page_size=5000)
+    with benchmark("Building id to rev dictionary"):
+
+        i = 0
+        size = len(cache)
+        conflicts = 0
+
+        for result in results:
+            rev_dict[result['id']] = result['value']['rev']
+
+            if len(rev_dict) >= messageSize:
+                i += len(rev_dict)
+                load = list()
+                for item_id, item_rev in rev_dict.items():
+                    item_json = cache[item_id]
+                    item_json['_rev'] = item_rev
+                    load.append(item_json)
+
+                print("{:.1f}%\t{}\t{}".format(100 * i / size, i, conflicts))
+                rts = database.bulk_docs(load)
+                for rt in rts:
+                    if 'error' in rt.keys():
+                        if rt['error'] == 'conflict':
+                            conflicts = conflicts + 1
+                        else:
+                            print('{} failed with error: {}'
+                                  .format(rt['id'], rt['error']))
+
+                rev_dict = dict()
+
+        if len(rev_dict) > 0:
+            load = list()
+            for item_id, item_rev in rev_dict.items():
+                item_json = cache[item_id]
+                item_json['_rev'] = item_rev
+                load.append(item_json)
+
+            print("100%\t{}\t".format(size, conflicts))
+            rts = database.bulk_docs(load)
+            for rt in rts:
+                if 'error' in rt.keys():
+                    if rt['error'] == 'conflict':
+                        conflicts = conflicts + 1
+                    else:
+                        print('{} failed with error: {}'
+                              .format(rt['id'], rt['error']))
+
+    if conflicts > 0:
+        print("{} conflicts occured".format(conflicts))
+
+
+def query_from_db(odata_id):
     client = Cloudant(api_user, api_pass, url=api_url)
     print("Quering all meeting times")
 
@@ -99,8 +162,10 @@ def __make_lookup_table__(cache, odata_lookup_type):
     return lookup_table
 
 
-def write_tables():
-    client = Cloudant(api_user, api_pass, url=api_url)
+# Writes lookup tables to the database
+def write_lookup_tables():
+    adapter = Replay429Adapter(200, 0.25)
+    client = Cloudant(api_user, api_pass, url=api_url, adapter=adapter)
     # or using url
     # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
 
@@ -116,33 +181,36 @@ def write_tables():
     f = open(file_path, 'r')
     text = f.read()
     f.close()
-    caches = json.loads(text)
+    deep_caches = json.loads(text)
 
     query_table_db = client['query_table']
-    query_table = __make_query_table__(caches['Subjects'], caches['Courses'])
+    query_table = __make_query_table__(deep_caches['Subjects'],
+                                       deep_caches['Courses'])
     bulk_upload(query_table, query_table_db)
 
     api_class_lookup_table_db = client['api_class_lookup_table']
     api_class_lookup_table = \
-        __make_lookup_table__(caches['Classes'], 'CourseId')
+        __make_lookup_table__(deep_caches['Classes'], 'CourseId')
     bulk_upload(api_class_lookup_table, api_class_lookup_table_db)
 
     section_lookup_table_db = client['section_lookup_table']
     section_lookup_table = \
-        __make_lookup_table__(caches['Sections'], 'ClassId')
+        __make_lookup_table__(deep_caches['Sections'], 'ClassId')
     bulk_upload(section_lookup_table, section_lookup_table_db)
 
     meeting_lookup_table_db = client['meeting_lookup_table']
     meeting_lookup_table = \
-        __make_lookup_table__(caches['Meetings'], 'SectionId')
+        __make_lookup_table__(deep_caches['Meetings'], 'SectionId')
     bulk_upload(meeting_lookup_table, meeting_lookup_table_db)
 
     # Disconnect from the server
     client.disconnect()
 
 
-def write_all_to_db():
-    client = Cloudant(api_user, api_pass, url=api_url)
+# Writes lookup tables to the database
+def update_lookup_tables():
+    adapter = Replay429Adapter(200, 0.25)
+    client = Cloudant(api_user, api_pass, url=api_url, adapter=adapter)
     # or using url
     # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
 
@@ -154,21 +222,104 @@ def write_all_to_db():
     print('Username: {0}'.format(session['userCtx']['name']))
     print('Databases: {0}'.format(client.all_dbs()))
 
-    courses_db = client['testing_db']
-
     file_path = "CourseInfo.json"
     f = open(file_path, 'r')
     text = f.read()
     f.close()
-    caches = json.loads(text)
+    deep_caches = json.loads(text)
 
-    for cache_type, cache in caches.items():
-        print("Uploading {}...".format(cache_type))
-        bulk_upload(cache, courses_db)
+    query_table_db = client['query_table']
+    query_table = __make_query_table__(deep_caches['Subjects'],
+                                       deep_caches['Courses'])
+    bulk_update(query_table, query_table_db)
+
+    api_class_lookup_table_db = client['api_class_lookup_table']
+    api_class_lookup_table = \
+        __make_lookup_table__(deep_caches['Classes'], 'CourseId')
+    bulk_update(api_class_lookup_table, api_class_lookup_table_db)
+
+    section_lookup_table_db = client['section_lookup_table']
+    section_lookup_table = \
+        __make_lookup_table__(deep_caches['Sections'], 'ClassId')
+    bulk_update(section_lookup_table, section_lookup_table_db)
+
+    meeting_lookup_table_db = client['meeting_lookup_table']
+    meeting_lookup_table = \
+        __make_lookup_table__(deep_caches['Meetings'], 'SectionId')
+    bulk_update(meeting_lookup_table, meeting_lookup_table_db)
 
     # Disconnect from the server
     client.disconnect()
 
 
-# write_tables()
+# Writes all courses to the database
+def write_all_to_db():
+    adapter = Replay429Adapter(200, 0.25)
+    client = Cloudant(api_user, api_pass, url=api_url, adapter=adapter)
+    # or using url
+    # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
+
+    # Connect to the server
+    client.connect()
+
+    # Perform client tasks...
+    session = client.session()
+    print('Username: {0}'.format(session['userCtx']['name']))
+    print('Databases: {0}'.format(client.all_dbs()))
+
+    courses_db = client['purdue_courses']
+
+    file_path = "CourseInfo.json"
+    f = open(file_path, 'r')
+    text = f.read()
+    f.close()
+    deep_caches = json.loads(text)
+
+    cache = dict()
+    for cache_type, cache in deep_caches.items():
+        cache.update(cache)
+
+    bulk_upload(cache, courses_db)
+
+    # Disconnect from the server
+    client.disconnect()
+
+
+# Writes all courses to the database
+def update_all_to_db():
+    adapter = Replay429Adapter(200, 0.25)
+    client = Cloudant(api_user, api_pass, url=api_url, adapter=adapter)
+    # or using url
+    # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
+
+    # Connect to the server
+    client.connect()
+
+    # Perform client tasks...
+    session = client.session()
+    print('Username: {0}'.format(session['userCtx']['name']))
+    print('Databases: {0}'.format(client.all_dbs()))
+
+    courses_db = client['purdue_courses']
+
+    file_path = "CourseInfo.json"
+    f = open(file_path, 'r')
+    text = f.read()
+    f.close()
+    deep_caches = json.loads(text)
+
+    cache = dict()
+    for cache_type, cache in deep_caches.items():
+        cache.update(cache)
+
+    bulk_update(cache, courses_db)
+
+    # Disconnect from the server
+    client.disconnect()
+
+
+logging.basicConfig(level=logging.INFO)
+write_lookup_tables()
+update_lookup_tables()
 # write_all_to_db()
+# update_all_to_db()

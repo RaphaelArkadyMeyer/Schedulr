@@ -3,7 +3,7 @@ import json
 
 
 def make_url(path=''):
-    return 'http://api.purdue.io/odata/' + path
+    return 'http://api-dev.purdue.io/odata/' + path
 
 
 def send_request(payload, path=''):
@@ -14,7 +14,7 @@ def send_request(payload, path=''):
     return resp
 
 
-def request_cache(payload, odata_type, key):
+def request_cache(payload, odata_type, odata_type_name, key):
     resp = send_request(payload, odata_type)
     print('Request URL:{}'.format(resp.url))
     resp_list = resp.json()['value']
@@ -23,7 +23,7 @@ def request_cache(payload, odata_type, key):
     for item in resp_list:  # Build map by given key
         cache[item[key]] = item  # list(item.values())  #
         item['_id'] = item[key]
-        item['odata_type'] = odata_type
+        item['odata_type'] = odata_type_name
     return cache
 
 
@@ -50,47 +50,50 @@ def download_all_data(file_path):
     _term_ids = ["c543a529-fed4-4fd0-b185-bd403106b4ea"]
     _term_payload = {'$filter': 'TermId eq ' + _term_ids[0]}
     print(_term_payload)
-    term_cache = request_cache(_term_payload, 'Terms', 'TermId')
+    term_cache = request_cache(_term_payload, 'Terms', 'Term', 'TermId')
     describe_cache(term_cache, 'Terms')
 
     _subject_payload = {}
-    subject_cache = request_cache(_subject_payload, 'Subjects', 'SubjectId')
+    subject_cache = request_cache(_subject_payload, 'Subjects', 'Subject', 'SubjectId')
     describe_cache(subject_cache, 'Subjects')
 
     _course_payload = {}
-    course_cache = request_cache(_course_payload, 'Courses', 'CourseId')
+    course_cache = request_cache(_course_payload, 'Courses', 'Course', 'CourseId')
     describe_cache(course_cache, 'Course')
 
     _class_payload = {'$filter':
                       'TermId eq ' + _term_ids[0]}
-    class_cache = request_cache(_class_payload, 'Classes', 'ClassId')
+    class_cache = request_cache(_class_payload, 'Classes', 'Class', 'ClassId')
     describe_cache(class_cache, 'Classes')
 
     _section_payload = {}
-    section_cache = request_cache(_section_payload, 'Sections', 'SectionId')
+    section_cache = request_cache(_section_payload, 'Sections', 'Section', 'SectionId')
     describe_cache(section_cache, 'Sections')
 
     _meeting_payload = {}
-    meeting_cache = request_cache(_meeting_payload, 'Meetings', 'MeetingId')
+    meeting_cache = request_cache(_meeting_payload, 'Meetings', 'Meeting', 'MeetingId')
     describe_cache(meeting_cache, 'Meetings')
 
     _instructors_payload = {}
     instructors_cache = request_cache(_instructors_payload,
                                       'Instructors',
+                                      'Instructor',
                                       'InstructorId')
     describe_cache(instructors_cache, 'Intructors')
 
     _campus_payload = {}
-    campus_cache = request_cache(_campus_payload, 'Campuses', 'CampusId')
+    campus_cache = request_cache(_campus_payload, 'Campuses', 'Campus', 'CampusId')
     describe_cache(campus_cache, 'Campus')
 
     _building_payload = {}
     building_cache = request_cache(_building_payload,
-                                   'Buildings', 'BuildingId')
+                                   'Buildings',
+                                   'Building',
+                                   'BuildingId')
     describe_cache(building_cache, 'Buildings')
 
     _room_payload = {}
-    room_cache = request_cache(_room_payload, 'Rooms', 'RoomId')
+    room_cache = request_cache(_room_payload, 'Rooms', 'Room', 'RoomId')
     describe_cache(room_cache, 'Rooms')
 
     caches = dict()
@@ -114,3 +117,6 @@ def download_all_data(file_path):
     write_caches(caches, file_path)
 
     print("End")
+
+
+download_all_data("CourseInfo.json")

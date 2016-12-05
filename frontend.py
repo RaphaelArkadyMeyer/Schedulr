@@ -8,10 +8,13 @@ import wtforms
 import wtforms.validators
 import flask
 
-from read_courses import CourseCache
 
 import re
 import logging
+
+from read_courses import CourseCache
+import course_maker
+from schedule_models import *
 
 frontend = Blueprint('frontend', __name__)
 
@@ -62,7 +65,7 @@ def CourseList_static_constructor():
         course_key = 'course'+str(i)
         sf = wtforms.StringField(course_name,validators=[
                 wtforms.validators.Optional(),
-                wtforms.validators.Regexp(r'[a-zA-Z]+[0-9]+')
+                wtforms.validators.Regexp(r'^[a-zA-Z]+[0-9]+$')
                 ])
         setattr(CourseList, course_key, sf)
         CourseList.course_keys.append(course_key)
@@ -95,44 +98,46 @@ def safe_cast(from_object, to_type, default=None):
 
 
 def day_of_week_to_offset(day):
-    x =  {
-            'Monday'    : '16.666%',
-            'Tuesday'   : '33.333%',
-            'Wednesday' : '50%',
-            'Thursday'  : '66.666%',
-            'Friday'    : '83.333%'
+    return {
+            Day.Monday    : '16.666%',
+            Day.Tuesday   : '33.333%',
+            Day.Wednesday : '50%',
+            Day.Thursday  : '66.666%',
+            Day.Friday    : '83.333%',
+            Day.Other     : '100%'
     }.get(day, 0)
-    return x
 
 """
 Generates a schedule page
-@gen an iterable of course strings (i.e. "CS252" or "CS25200")
+@gen an iterable of course pairs (i.e. ("CS","252") or ("CS","25200"))
 """
 def generate_schedule(gen):
-    def schedule_styler():
-        i = -1
-        for (dept,num) in gen:
-            meetings = CourseCache.query_meeting_times(dept,num)
-            for meeting in meetings:
-                i            += 1
-                start_time   =  CourseCache.parse_meeting_time(meeting['StartTime'])
-                days_of_week =  map(day_of_week_to_offset, meeting['DaysOfWeek'].split(', '))
-                duration     =  50
-                description  =  dept+num+' '+meeting['Type']
-                color        =  css_defs['color']['courses'][i % len(css_defs['color']['courses'])]
-                top          =  str((start_time.hour-7)*60 + start_time.minute - 2.5) + 'px'
-                height       =  str(duration-5) + 'px'
-                for left in days_of_week:
-                    yield {
-                            'description': description,
-                            'color':       color,
-                            'left':        left,
-                            'top':         top,
-                            'height':      height,
-                        }
+    schedule = course_maker.max_guess(gen)
+    logging.info("Displaying generated schedule:")
+    logging.info(schedule)
+    i = 0
+    boxes = []
+    for meeting in schedule:
+        i            += 1
+        start_time   =  meeting.start_time
+        days_of_week =  meeting.days
+        duration     =  meeting.duration
+        description  =  meeting.course_title + ' ' + meeting.meeting_type
+        color        =  css_defs['color']['courses'][i % len(css_defs['color']['courses'])]
+        top          =  str(start_time - 7*60) + 'px'
+        height       =  str(duration-5) + 'px'
+        for day in days_of_week:
+            left = day_of_week_to_offset(day)
+            boxes.append({
+                'description': description,
+                'color':       color,
+                'left':        left,
+                'top':         top,
+                'height':      height,
+                })
     return flask.render_template(
             'schedule.html',
-            fields=schedule_styler(),
+            fields=boxes,
             days_of_the_week_offset=days_of_the_week_offset,
             hours_of_the_day=hours_of_the_day,
             alerts=[Alert("Have a schedule", 'info')])
