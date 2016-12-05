@@ -8,6 +8,7 @@
 		<title>{% block title %}{% if title %}{{title}}{% else %}{{"Schedülr"}}{% endif %}{% endblock title %}</title>
 
 		{%- block metas %}
+		<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		{%- endblock metas %}
 
@@ -26,6 +27,13 @@
 		{% block navbar %}
 		{{ nav.navigate.render() }}
 		{%- endblock navbar %}
+
+		{% for alert in alerts %}
+			<div class="alert {{ alert.type }}">
+				{{ alert.message }}
+			</div>
+		{% endfor %}
+
 		<div class="content">
 			{% block content -%}
 			{%- endblock content %}

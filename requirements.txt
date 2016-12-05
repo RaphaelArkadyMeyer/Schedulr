@@ -4,3 +4,4 @@ flask-nav
 flask-debug
 flask-wtf
 cloudant
+numpy

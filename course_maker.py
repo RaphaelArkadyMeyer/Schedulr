@@ -6,26 +6,43 @@ import json
 import logging
 
 from read_courses import CourseCache
+import math
+import random
 import schedule_models
 
+from evaluator import evaluate_schedule
 
 def meetings_overlap(meeting1, meeting2):
     if not set(meeting1.days).intersection(meeting2.days):
         return False  # The meetings don't occur on the same day
-    if meeting1.start_time < meeting2.start_time + meeting2.duration:
+    if meeting1.start_time > meeting2.start_time + meeting2.duration:
         return False  # meeting1 is after meeting2
-    if meeting1.start_time + meeting1.duration > meeting2.start_time:
+    if meeting1.start_time + meeting1.duration < meeting2.start_time:
         return False  # meeting1 is before meeting2
     return True
 
 
 def max_guess(list_dept_num):
     result = get_all_schedules(list_dept_num)
-    result = next(result, [])
+    result = next(result, None)
     logging.debug("Found schedule");
     logging.debug(result);
     return result
 
+
+def best_schedule(list_dept_num, best_time=12 * 60, preset=0):
+    schedules = get_all_schedules(list_dept_num)
+    best = math.inf
+    bestSchedule = None
+    for schedule in schedules:
+        rating = evaluate_schedule(schedule, best_time, preset)
+        if rating < best:
+            bestSchedule = schedule
+            best = rating
+    logging.info("Best schedule is")
+    logging.info(bestSchedule)
+    logging.info(best)
+    return bestSchedule
 
 def get_all_schedules(list_dept_num):
     s = schedule_models.Schedule()
@@ -59,12 +76,11 @@ def _get_schedule_helper(meetingss, meetings_in_schedule=[]):
         yield meetings_in_schedule
         return  # Can't add any more because we're done :-)
     head, *tail = meetingss
+    random.shuffle(head)
     for meeting in head:
         if not any(meetings_overlap(meeting, other) for other in meetings_in_schedule):
             for schedule in _get_schedule_helper(tail, [meeting] + meetings_in_schedule):
                 yield schedule
-        else:
-            logging.info('Schedule conflict')
 
 
 
