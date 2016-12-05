@@ -3,9 +3,6 @@ from numpy import polyfit, poly1d
 import numpy as np
 import warnings
 
-import matplotlib.pyplot as plt
-
-
 from schedule_models import Day
 
 
