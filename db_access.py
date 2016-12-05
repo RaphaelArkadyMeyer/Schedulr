@@ -1,8 +1,10 @@
+from cloudant.adapters import Replay429Adapter
 from cloudant.client import Cloudant
 from cloudant.result import Result
 import json
 import logging
 from time_profiler import benchmark
+
 
 # HIDDEN FROM GITHUB. GET YOUR OWN KEY FROM BLUEMIX
 api_url = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
@@ -84,6 +86,12 @@ def bulk_update(cache, database, messageSize=1500):
                 rev_dict = dict()
 
         if len(rev_dict) > 0:
+            load = list()
+            for item_id, item_rev in rev_dict.items():
+                item_json = cache[item_id]
+                item_json['_rev'] = item_rev
+                load.append(item_json)
+
             print("100%\t{}\t".format(size, conflicts))
             rts = database.bulk_docs(load)
             for rt in rts:
@@ -156,7 +164,8 @@ def __make_lookup_table__(cache, odata_lookup_type):
 
 # Writes lookup tables to the database
 def write_lookup_tables():
-    client = Cloudant(api_user, api_pass, url=api_url)
+    adapter = Replay429Adapter(200, 0.25)
+    client = Cloudant(api_user, api_pass, url=api_url, adapter=adapter)
     # or using url
     # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
 
@@ -172,26 +181,72 @@ def write_lookup_tables():
     f = open(file_path, 'r')
     text = f.read()
     f.close()
-    caches = json.loads(text)
+    deep_caches = json.loads(text)
 
     query_table_db = client['query_table']
-    query_table = __make_query_table__(caches['Subjects'], caches['Courses'])
+    query_table = __make_query_table__(deep_caches['Subjects'],
+                                       deep_caches['Courses'])
     bulk_upload(query_table, query_table_db)
 
     api_class_lookup_table_db = client['api_class_lookup_table']
     api_class_lookup_table = \
-        __make_lookup_table__(caches['Classes'], 'CourseId')
+        __make_lookup_table__(deep_caches['Classes'], 'CourseId')
     bulk_upload(api_class_lookup_table, api_class_lookup_table_db)
 
     section_lookup_table_db = client['section_lookup_table']
     section_lookup_table = \
-        __make_lookup_table__(caches['Sections'], 'ClassId')
+        __make_lookup_table__(deep_caches['Sections'], 'ClassId')
     bulk_upload(section_lookup_table, section_lookup_table_db)
 
     meeting_lookup_table_db = client['meeting_lookup_table']
     meeting_lookup_table = \
-        __make_lookup_table__(caches['Meetings'], 'SectionId')
+        __make_lookup_table__(deep_caches['Meetings'], 'SectionId')
     bulk_upload(meeting_lookup_table, meeting_lookup_table_db)
+
+    # Disconnect from the server
+    client.disconnect()
+
+
+# Writes lookup tables to the database
+def update_lookup_tables():
+    adapter = Replay429Adapter(200, 0.25)
+    client = Cloudant(api_user, api_pass, url=api_url, adapter=adapter)
+    # or using url
+    # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
+
+    # Connect to the server
+    client.connect()
+
+    # Perform client tasks...
+    session = client.session()
+    print('Username: {0}'.format(session['userCtx']['name']))
+    print('Databases: {0}'.format(client.all_dbs()))
+
+    file_path = "CourseInfo.json"
+    f = open(file_path, 'r')
+    text = f.read()
+    f.close()
+    deep_caches = json.loads(text)
+
+    query_table_db = client['query_table']
+    query_table = __make_query_table__(deep_caches['Subjects'],
+                                       deep_caches['Courses'])
+    bulk_update(query_table, query_table_db)
+
+    api_class_lookup_table_db = client['api_class_lookup_table']
+    api_class_lookup_table = \
+        __make_lookup_table__(deep_caches['Classes'], 'CourseId')
+    bulk_update(api_class_lookup_table, api_class_lookup_table_db)
+
+    section_lookup_table_db = client['section_lookup_table']
+    section_lookup_table = \
+        __make_lookup_table__(deep_caches['Sections'], 'ClassId')
+    bulk_update(section_lookup_table, section_lookup_table_db)
+
+    meeting_lookup_table_db = client['meeting_lookup_table']
+    meeting_lookup_table = \
+        __make_lookup_table__(deep_caches['Meetings'], 'SectionId')
+    bulk_update(meeting_lookup_table, meeting_lookup_table_db)
 
     # Disconnect from the server
     client.disconnect()
@@ -199,7 +254,8 @@ def write_lookup_tables():
 
 # Writes all courses to the database
 def write_all_to_db():
-    client = Cloudant(api_user, api_pass, url=api_url)
+    adapter = Replay429Adapter(200, 0.25)
+    client = Cloudant(api_user, api_pass, url=api_url, adapter=adapter)
     # or using url
     # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
 
@@ -217,9 +273,13 @@ def write_all_to_db():
     f = open(file_path, 'r')
     text = f.read()
     f.close()
-    caches = json.loads(text)
+    deep_caches = json.loads(text)
 
-    bulk_upload(caches, courses_db)
+    cache = dict()
+    for cache_type, cache in deep_caches.items():
+        cache.update(cache)
+
+    bulk_upload(cache, courses_db)
 
     # Disconnect from the server
     client.disconnect()
@@ -227,8 +287,8 @@ def write_all_to_db():
 
 # Writes all courses to the database
 def update_all_to_db():
-
-    client = Cloudant(api_user, api_pass, url=api_url)
+    adapter = Replay429Adapter(200, 0.25)
+    client = Cloudant(api_user, api_pass, url=api_url, adapter=adapter)
     # or using url
     # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
 
@@ -246,15 +306,20 @@ def update_all_to_db():
     f = open(file_path, 'r')
     text = f.read()
     f.close()
-    caches = json.loads(text)
+    deep_caches = json.loads(text)
 
-    bulk_update(caches, courses_db)
+    cache = dict()
+    for cache_type, cache in deep_caches.items():
+        cache.update(cache)
+
+    bulk_update(cache, courses_db)
 
     # Disconnect from the server
     client.disconnect()
 
 
 logging.basicConfig(level=logging.INFO)
-# write_lookup_tables()
+write_lookup_tables()
+update_lookup_tables()
 # write_all_to_db()
-update_all_to_db()
+# update_all_to_db()
