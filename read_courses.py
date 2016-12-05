@@ -262,7 +262,6 @@ class CourseCache:
             results = Result(cls.query_table_db.all_docs,
                              include_docs=True,
                              page_size=package_size)
-            cls.query_table = dict()
             for result in results:
                 cls.query_table[result['id']] = result['doc']['dict']
             logging.info('Downloaded query_table has {} documents'
@@ -272,7 +271,6 @@ class CourseCache:
             results = Result(cls.api_class_lookup_db.all_docs,
                              include_docs=True,
                              page_size=package_size)
-            cls.api_class_lookup_table = dict()
             for result in results:
                 lookup_list = result['doc'].get('list', list())
                 cls.api_class_lookup_table[result['id']] = lookup_list
@@ -283,7 +281,6 @@ class CourseCache:
             results = Result(cls.section_lookup_db.all_docs,
                              include_docs=True,
                              page_size=package_size)
-            cls.section_lookup_table = dict()
             for result in results:
                 lookup_list = result['doc']['list']
                 cls.section_lookup_table[result['id']] = lookup_list
@@ -294,7 +291,6 @@ class CourseCache:
             results = Result(cls.meeting_lookup_db.all_docs,
                              include_docs=True,
                              page_size=package_size)
-            cls.meeting_lookup_table = dict()
             for result in results:
                 lookup_list = result['doc']['list']
                 cls.meeting_lookup_table[result['id']] = lookup_list
@@ -305,9 +301,7 @@ class CourseCache:
             results = Result(cls.courses_db.all_docs,
                              include_docs=True,
                              page_size=package_size)
-            cls.meeting_lookup_table = dict()
             for result in results:
                 cls.api_object_cache[result['id']] = result['doc']
             logging.info('Downloaded api objects has {} documents'
-                         .format(len(cls.meeting_lookup_table)))
-
+                         .format(len(cls.api_object_cache)))
