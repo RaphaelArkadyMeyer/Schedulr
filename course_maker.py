@@ -32,14 +32,15 @@ def max_guess(list_dept_num):
 
 def best_schedule(list_dept_num, best_time=12 * 60, preset=0):
     schedules = get_all_schedules(list_dept_num)
-    ratings = []
-    for schedule in schedules:
-        ratings.append(evaluate_schedule(schedule, best_time, preset))
     best = math.inf
     bestSchedule = None
-    for (schedule, rating) in zip(schedules, ratings):
+    for schedule in schedules:
+        rating = evaluate_schedule(schedule, best_time, preset)
         if rating < best:
             bestSchedule = schedule
+    logging.info("Best schedule is")
+    logging.info(bestSchedule)
+    logging.info(best)
     return bestSchedule
 
 def get_all_schedules(list_dept_num):
