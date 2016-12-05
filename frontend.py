@@ -60,7 +60,7 @@ def CourseList_static_constructor():
         course_key = 'course'+str(i)
         sf = wtforms.StringField(course_name,validators=[
                 wtforms.validators.Optional(),
-                wtforms.validators.Regexp(r'[a-zA-Z]+[0-9]+')
+                wtforms.validators.Regexp(r'^[a-zA-Z]+[0-9]+$')
                 ])
         setattr(CourseList, course_key, sf)
         CourseList.course_keys.append(course_key)
