@@ -6,9 +6,11 @@ import json
 import logging
 
 from read_courses import CourseCache
+import math
 import random
 import schedule_models
 
+from evaluator import evaluate_schedule
 
 def meetings_overlap(meeting1, meeting2):
     if not set(meeting1.days).intersection(meeting2.days):
@@ -27,6 +29,18 @@ def max_guess(list_dept_num):
     logging.debug(result);
     return result
 
+
+def best_schedule(list_dept_num, best_time=12 * 60, preset=0):
+    schedules = get_all_schedules(list_dept_num)
+    ratings = []
+    for schedule in schedules:
+        ratings.append(evaluate_schedule(schedule, best_time, preset))
+    best = math.inf
+    bestSchedule = None
+    for (schedule, rating) in zip(schedules, ratings):
+        if rating < best:
+            bestSchedule = schedule
+    return bestSchedule
 
 def get_all_schedules(list_dept_num):
     s = schedule_models.Schedule()
