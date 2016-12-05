@@ -1,5 +1,8 @@
 from cloudant.client import Cloudant
+from cloudant.result import Result
 import json
+import logging
+from time_profiler import benchmark
 
 # HIDDEN FROM GITHUB. GET YOUR OWN KEY FROM BLUEMIX
 api_url = 'https://8f130e0a-0c4f-41f3-abdd-716a84018df8-bluemix' \
@@ -43,6 +46,53 @@ def bulk_upload(cache, database, messageSize=1500):
                 else:
                     print('{} Failed with error: {}'
                           .format(rt['id'], rt['error']))
+
+    if conflicts > 0:
+        print("{} conflicts occured".format(conflicts))
+
+
+def bulk_update(cache, database, messageSize=1500):
+    rev_dict = dict()
+    results = Result(database.all_docs, page_size=5000)
+    with benchmark("Building id to rev dictionary"):
+
+        i = 0
+        size = len(cache)
+        conflicts = 0
+
+        for result in results:
+            rev_dict[result['id']] = result['value']['rev']
+
+            if len(rev_dict) >= messageSize:
+                i += len(rev_dict)
+                load = list()
+                for item_id, item_rev in rev_dict.items():
+                    item_json = cache[item_id]
+                    item_json['_rev'] = item_rev
+                    load.append(item_json)
+
+                print("{:.1f}%\t{}\t{}".format(100 * i / size, i, conflicts))
+                rts = database.bulk_docs(load)
+                for rt in rts:
+                    if 'error' in rt.keys():
+                        if rt['error'] == 'conflict':
+                            conflicts = conflicts + 1
+                        else:
+                            print('{} failed with error: {}'
+                                  .format(rt['id'], rt['error']))
+
+                rev_dict = dict()
+
+        if len(rev_dict) > 0:
+            print("100%\t{}\t".format(size, conflicts))
+            rts = database.bulk_docs(load)
+            for rt in rts:
+                if 'error' in rt.keys():
+                    if rt['error'] == 'conflict':
+                        conflicts = conflicts + 1
+                    else:
+                        print('{} failed with error: {}'
+                              .format(rt['id'], rt['error']))
 
     if conflicts > 0:
         print("{} conflicts occured".format(conflicts))
@@ -175,5 +225,36 @@ def write_all_to_db():
     client.disconnect()
 
 
+# Writes all courses to the database
+def update_all_to_db():
+
+    client = Cloudant(api_user, api_pass, url=api_url)
+    # or using url
+    # client = Cloudant(USERNAME, PASSWORD, url='https://acct.cloudant.com')
+
+    # Connect to the server
+    client.connect()
+
+    # Perform client tasks...
+    session = client.session()
+    print('Username: {0}'.format(session['userCtx']['name']))
+    print('Databases: {0}'.format(client.all_dbs()))
+
+    courses_db = client['purdue_courses']
+
+    file_path = "CourseInfo.json"
+    f = open(file_path, 'r')
+    text = f.read()
+    f.close()
+    caches = json.loads(text)
+
+    bulk_update(caches, courses_db)
+
+    # Disconnect from the server
+    client.disconnect()
+
+
+logging.basicConfig(level=logging.INFO)
 # write_lookup_tables()
 # write_all_to_db()
+update_all_to_db()
