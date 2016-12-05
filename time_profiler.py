@@ -3,6 +3,7 @@
 # http://dabeaz.blogspot.fr/2010/02/context-manager-for-timing-benchmarks.html
 
 import time
+import logging
 
 
 class benchmark(object):
@@ -14,5 +15,5 @@ class benchmark(object):
 
     def __exit__(self, ty, val, tb):
         end = time.time()
-        print("%s : %0.3f seconds" % (self.name, end - self.start))
+        logging.info("%s : %0.3f seconds" % (self.name, end - self.start))
         return False
