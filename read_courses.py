@@ -173,7 +173,7 @@ class CourseCache:
 
     @classmethod  # Gets the actual meeting for an id
     def query_meeting_id(cls, meeting_id):
-        meeting = cls.get_api_object(meeting_id, 'Meetings')
+        meeting = cls.get_api_object(meeting_id, 'Meeting')
         if meeting is None:
             return None
 
@@ -184,7 +184,7 @@ class CourseCache:
 
     @classmethod  # Gets the list of meetings for a section
     def query_section_id(cls, section_id):
-        section = cls.get_api_object(section_id, 'Sections')
+        section = cls.get_api_object(section_id, 'Section')
         if section is None:
             return list()
 
@@ -199,7 +199,7 @@ class CourseCache:
     @classmethod  # Gets the dict of section -> list(meetings) for an api_class
     def query_api_class_id(cls, api_class_id):
         # good_campus = '983c3fdc-f3f0-4f0b-a31c-c6f417e186fd'
-        api_class = cls.get_api_object(api_class_id, 'Classes')
+        api_class = cls.get_api_object(api_class_id, 'Class')
         if api_class is None:  # or api_class['CampusId'] is not good_campus:
             return list()
 
@@ -215,7 +215,7 @@ class CourseCache:
     # for a course
     @classmethod
     def query_course_id(cls, course_id):
-        course = cls.get_api_object(course_id, 'Courses')
+        course = cls.get_api_object(course_id, 'Course')
         if course is None:
             return dict()
 
