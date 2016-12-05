@@ -34,6 +34,11 @@ days_of_the_week_offset = [
         ('Friday',    '83.333%')]
 hours_of_the_day = [str(t)+":00AM" for t in range(7,12+1)] + [str(t)+":00PM" for t in range(1,7+1)]
 
+class Alert:
+    def __init__(self, message, type='danger'):
+        self.type = 'alert-' + type
+        self.message = message
+
 class CourseList (FlaskForm):
     max_courses = 15
     course_keys = []
@@ -129,7 +134,8 @@ def generate_schedule(gen):
             'schedule.html',
             fields=schedule_styler(),
             days_of_the_week_offset=days_of_the_week_offset,
-            hours_of_the_day=hours_of_the_day)
+            hours_of_the_day=hours_of_the_day,
+            alerts=[Alert("Have a schedule", 'info')])
 
 
 @frontend.route('/select', methods=['GET','POST'])
