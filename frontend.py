@@ -8,13 +8,13 @@ import wtforms
 import wtforms.validators
 import flask
 
-import schedule_models
-from read_courses import CourseCache
 
 import re
 import logging
 
+from read_courses import CourseCache
 import course_maker
+import schedule_models
 
 frontend = Blueprint('frontend', __name__)
 
@@ -74,11 +74,12 @@ def navigation_header():
 
 @frontend.route('/')
 def get_index():
-    #return flask.render_template("base.html", mimetype="text/html")
+    logging.debug ("Sending home page")
     return flask.redirect("select", code=302)
 
 @frontend.route('/stylesheets/style.css')
 def get_main_stylesheet():
+    logging.debug ("Sending main css")
     css_file = flask.render_template('/style.css', renderer='bootstrap', **css_defs)
     css_file = flask.make_response(css_file)
     css_file.mimetype = "text/css"
@@ -139,6 +140,7 @@ def generate_schedule(gen):
 
 @frontend.route('/select', methods=['GET','POST'])
 def make_schedule():
+    logging.debug ("Sending schedule selection")
     form = CourseList()
     if form.validate_on_submit():
         def preprocess_courses():
@@ -162,10 +164,11 @@ def get_script(filename):
 
 @frontend.route('/images/<filename>')
 def get_image(filename):
+    logging.debug ("Sending image "+filename)
     return flask.send_from_directory('static/images', filename)
 
 @frontend.route('/stylesheets/<filename>')
 def get_stylesheets(filename):
-    print ("stylesheet "+filename)
+    logging.debug ("Sending stylesheet "+filename)
     return flask.send_from_directory('static/stylesheets', filename)
 

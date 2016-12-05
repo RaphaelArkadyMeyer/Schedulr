@@ -39,7 +39,9 @@ nav.navbar-default, nav{
 	transition: all .5s;
 }
 
-div.courses div:not(.form-revealed) {
+div.courses div:not(.form-revealed),
+div.courses div:not(.form-revealed) *
+{
 	height: 0;
 	margin: 0;
 	padding: 0;
