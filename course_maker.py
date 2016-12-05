@@ -1,10 +1,11 @@
 
+
+from datetime import datetime
 import json
+import logging
 
 from read_courses import CourseCache
-
 import schedule_models
-import logging
 
 
 def meetings_overlap(meeting1, meeting2):
@@ -37,9 +38,17 @@ def get_all_schedules(list_dept_num):
                     section_type = section['Type']
                     meeting_list = section_meetings.get(section_type, [])
                     meeting_list += meetings
+                    logging.debug(meeting_list)
                     section_meetings[section_type] = meeting_list
+                    logging.debug(section_meetings)
             logging.debug(section_meetings)
         list_of_list_of_meetings += section_meetings.values()
+    meeting_objects = []
+    for list_of_list_of_meetings in list_of_list_of_meetings:
+        meeting_objects.append(
+                [ schedule_models.meeting_from_json(meeting)
+                    for meeting in list_of_list_of_meetings ]
+                )
     return _get_schedule_helper(list_of_list_of_meetings)
 
 

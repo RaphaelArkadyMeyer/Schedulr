@@ -1,4 +1,5 @@
 
+from datetime import datetime
 from enum import Enum
 
 class Day(Enum):
@@ -18,14 +19,14 @@ day_dict = {
         'Friday':    Day.Friday
     }
 
-def meetingFromJSON(obj):
+def meeting_from_json(obj):
     days         = obj['DaysOfWeek'].split(', ')
     start_time   = obj['StartTime']
     duration     = obj['Duration']
     meeting_type = obj['Type']
 
     days       = [day_dict.get(day, Day.Other) for day in days]
-    start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S%z')
+    start_time = datetime.strptime(start_time[:-6], '%Y-%m-%dT%H:%M:%S')
     duration   = parse_iso8601_duration(duration)
 
     return Meeting(days, start_time, duration, meeting_type)
