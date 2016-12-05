@@ -1,5 +1,6 @@
 
 
+from copy import copy, deepcopy
 from datetime import datetime
 import json
 import logging
@@ -30,6 +31,7 @@ def get_all_schedules(list_dept_num):
     s = schedule_models.Schedule()
     meetingss = []
     for (dept,num) in list_dept_num:
+        course_name = deepcopy(dept + num)
         query = CourseCache.query(dept,num)
         section_meetings = {}
         for api_class in query:
@@ -41,13 +43,14 @@ def get_all_schedules(list_dept_num):
                     meeting_list = section_meetings.get(section_type, [])
                     meeting_list += meetings
                     section_meetings[section_type] = meeting_list
-        meetingss += map(
-                lambda ms: map(
-                    lambda m: schedule_models.meeting_from_json(m, dept + num),
-                    ms),
-                section_meetings.values())
-    logging.debug('All possible meeting times')
-    logging.debug(meetingss)
+        logging.info(course_name)
+        meetingss2 = []
+        for meetings in section_meetings.values():
+            meetings2 = []
+            for meeting in meetings:
+                meetings2.append(schedule_models.meeting_from_json(meeting, course_name))
+            meetingss2.append(meetings2)
+        meetingss += meetingss2
     return _get_schedule_helper(meetingss)
 
 

@@ -2,6 +2,7 @@
 from datetime import datetime
 from enum import Enum
 import re
+import logging
 
 class Day(Enum):
     Monday    = 1
@@ -20,7 +21,8 @@ day_dict = {
         'Friday':    Day.Friday
     }
 
-def meeting_from_json(obj, title):
+def meeting_from_json(obj, course_title):
+    logging.info('Created new meeting for ' + course_title)
     days         = obj['DaysOfWeek'].split(', ')
     start_time   = obj['StartTime']
     duration     = obj['Duration']
@@ -34,7 +36,7 @@ def meeting_from_json(obj, title):
     else:
         duration = parse_iso8601_duration(duration) / 60
 
-    return Meeting(days, start_time, duration, meeting_type, title)
+    return Meeting(days, start_time, duration, meeting_type, course_title)
 
 
 def parse_iso8601_duration(duration_str):
