@@ -22,7 +22,7 @@ def meetings_overlap(meeting1, meeting2):
 
 def max_guess(list_dept_num):
     result = get_all_schedules(list_dept_num)
-    result = next(result, [])
+    result = next(result, None)
     logging.debug("Found schedule");
     logging.debug(result);
     return result
