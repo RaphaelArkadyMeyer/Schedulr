@@ -8,9 +8,13 @@ import wtforms
 import wtforms.validators
 import flask
 
+import schedule_models
 from read_courses import CourseCache
 
 import re
+import logging
+
+import course_maker
 
 frontend = Blueprint('frontend', __name__)
 
@@ -99,11 +103,13 @@ def day_of_week_to_offset(day):
 
 """
 Generates a schedule page
-@gen an iterable of course strings (i.e. "CS252" or "CS25200")
+@gen an iterable of course pairs (i.e. ("CS","252") or ("CS","25200"))
 """
 def generate_schedule(gen):
     def schedule_styler():
         i = -1
+        foo = course_maker.max_guess(gen)
+        logging.debug(foo)
         for (dept,num) in gen:
             meetings = CourseCache.query_meeting_times(dept,num)
             for meeting in meetings:
